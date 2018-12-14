@@ -1,0 +1,55 @@
+# TC1: start container with full information
+docker rm -f test_base
+ts=$(gdate +%s%N)
+IMAGE=semcon/sc-base:latest; docker run --name test_base -e IMAGE_SHA256="$(docker image ls --no-trunc -q $IMAGE | tail -1)" -e IMAGE_NAME=$IMAGE -p 4000:3000 -d $IMAGE
+bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:4000/api/log)" != "200" ]]; do sleep 1; done'
+echo "$((($(gdate +%s%N) - $ts)/1000000)) milliseconds"
+
+# TC10: validate log entry for container creation
+curl http://localhost:4000/api/log
+
+# TC2: start container quickly
+docker rm -f test_base
+ts=$(gdate +%s%N)
+IMAGE=semcon/sc-base:latest; docker run --name test_base -p 4000:3000 -d $IMAGE
+bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:4000/api/log)" != "200" ]]; do sleep 1; done'
+echo "$((($(gdate +%s%N) - $ts)/1000000)) milliseconds"
+
+# TC3: write 1.000 times
+ts=$(gdate +%s%N)
+for i in {1..1000}; do curl -H "Content-Type: application/json" -d '[{"field1":"value", "field2":4.2}]' -X POST http://localhost:4000/api/data; done
+echo "$((($(gdate +%s%N) - $ts)/1000000)) milliseconds"
+
+# TC4: read 1.000 records
+ts=$(gdate +%s%N)
+curl http://localhost:4000/api/data
+echo "$((($(gdate +%s%N) - $ts)/1000000)) milliseconds"
+
+# TC5: write 10.000 times
+ts=$(gdate +%s%N)
+for i in {1..10000}; do curl -H "Content-Type: application/json" -d '[{"field1":"value", "field2":4.2}]' -X POST http://localhost:4000/api/data; done
+echo "$((($(gdate +%s%N) - $ts)/1000000)) milliseconds"
+
+# TC6: write 100 times 100 records
+ts=$(gdate +%s%N)
+for i in {1..100}; do curl -H "Content-Type: application/json" -d "[$( for i in {1..99}; do echo -n '{"field1":"value", "field2":4.2},'; done; ){\"field1\":\"value\", \"field2\":4.2}]" -X POST http://localhost:4000/api/data; done
+echo "$((($(gdate +%s%N) - $ts)/1000000)) milliseconds"
+
+# TC7: read 21.000 records
+ts=$(gdate +%s%N)
+curl http://localhost:4000/api/data
+echo "$((($(gdate +%s%N) - $ts)/1000000)) milliseconds"
+
+# TC8: write 100 times 1000 records
+ts=$(gdate +%s%N)
+for i in {1..100}; do curl -H "Content-Type: application/json" -d "[$( for i in {1..999}; do echo -n '{"field1":"value", "field2":4.2},'; done; ){\"field1\":\"value\", \"field2\":4.2}]" -X POST http://localhost:4000/api/data; done
+echo "$((($(gdate +%s%N) - $ts)/1000000)) milliseconds"
+
+# TC9: read 121.000 records
+ts=$(gdate +%s%N)
+curl http://localhost:4000/api/data
+echo "$((($(gdate +%s%N) - $ts)/1000000)) milliseconds"
+
+
+# check info
+curl http://localhost:4000/api/info

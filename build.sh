@@ -28,7 +28,7 @@ while [ $# -gt 0 ]; do
 done
 
 if $BUILD_CLEAN; then
-    docker build -f ./docker/Dockerfile --no-cache -t $REPOSITORY/$CONTAINER .
+    docker build --no-cache -f ./docker/Dockerfile -t $REPOSITORY/$CONTAINER .
 else
     docker build -f ./docker/Dockerfile -t $REPOSITORY/$CONTAINER .
 fi
