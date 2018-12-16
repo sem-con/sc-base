@@ -13,12 +13,13 @@ RUN mkdir -p $RAILS_ROOT/tmp/pids && \
 
 COPY Gemfile $WORKDIR
 
-RUN bundle install
-RUN gem install bundler
+RUN bundle install && \
+	gem install bundler
 
 COPY . .
 
-RUN bundle update
+RUN bundle update && \
+	ln -s $PWD/script/init.sh /bin/init.sh
 
 CMD ["./script/run.sh"]
 

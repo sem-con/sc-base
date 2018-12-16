@@ -11,7 +11,7 @@ module Api
             def init
                 createLog({
                     "type": "create",
-                    "scope": ENV["IMAGE_NAME"].to_s + " (" + ENV["IMAGE_SHA256"] + ")",
+                    "scope": ENV["IMAGE_NAME"].to_s + " (" + ENV["IMAGE_SHA256"].to_s + ")",
                     "request": "init.sh"}.to_json)
 
                 render plain: "",

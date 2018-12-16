@@ -8,11 +8,16 @@ Rails.application.routes.draw do
 #			match 'desc', to: 'semantics#show',           via: 'get'
 #			match 'desc/info', to: 'semantics#show_info', via: 'get'
 #			match 'desc/example', to: 'semantics#show_example', via: 'get'
-			match 'init', to: 'processes#init',             via: 'post'
-			match 'data', to: 'stores#index',             via: 'get'
-			match 'data', to: 'stores#create',            via: 'post'
-			match 'info', to: 'infos#index',              via: 'get'
-			match 'log',  to: 'logs#index',               via: 'get'
+			match 'init',         to: 'processes#init',         via: 'post'
+			match 'meta',         to: 'semantics#create',       via: 'post'
+			match 'meta',         to: 'semantics#show',	        via: 'get'
+			match 'meta/info',    to: 'semantics#show_info',    via: 'get'
+			match 'meta/example', to: 'semantics#show_example', via: 'get'
+			match 'data',         to: 'stores#index',           via: 'get'
+			match 'data',         to: 'stores#create',          via: 'post'
+			match 'info',         to: 'infos#index',            via: 'get'
+			match 'log',          to: 'logs#index',             via: 'get'
 		end
 	end
+	match ':not_found' => 'application#missing', :constraints => { :not_found => /.*/ }, via: [:get, :post]
 end

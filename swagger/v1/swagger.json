@@ -7,7 +7,10 @@
   "paths": {
     "/api/info": {
       "get": {
-        "summary": "container information",
+        "summary": "container overview",
+        "tags": [
+          "Basic"
+        ],
         "produces": [
           "application/json"
         ],
@@ -17,6 +20,12 @@
             "schema": {
               "type": "object",
               "properties": {
+                "title": {
+                  "type": "sting"
+                },
+                "image": {
+                  "type": "sting"
+                },
                 "records": {
                   "type": "integer"
                 }
@@ -32,6 +41,9 @@
     "/api/data": {
       "get": {
         "summary": "read data",
+        "tags": [
+          "Basic"
+        ],
         "produces": [
           "application/json"
         ],
@@ -43,6 +55,9 @@
       },
       "post": {
         "summary": "write data",
+        "tags": [
+          "Basic"
+        ],
         "consumes": [
           "application/json"
         ],
@@ -65,12 +80,82 @@
     "/api/log": {
       "get": {
         "summary": "log information",
+        "tags": [
+          "Basic"
+        ],
         "produces": [
           "application/json"
         ],
         "responses": {
           "200": {
             "description": "success"
+          }
+        }
+      }
+    },
+    "/api/meta": {
+      "get": {
+        "summary": "detailed container information",
+        "tags": [
+          "Semantic information"
+        ],
+        "produces": [
+          "plain/text"
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      },
+      "post": {
+        "summary": "set container information",
+        "tags": [
+          "Semantic information"
+        ],
+        "consumes": [
+          "plain/text"
+        ],
+        "parameters": [
+          {
+            "name": "input",
+            "in": "body"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/meta/{detail}": {
+      "get": {
+        "summary": "specific container information",
+        "tags": [
+          "Semantic information"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "detail",
+            "in": "path",
+            "type": "string",
+            "description": "'info' for general information, 'example' for examplary input data",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
           }
         }
       }

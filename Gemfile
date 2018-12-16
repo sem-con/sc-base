@@ -12,6 +12,9 @@ gem 'merkle-hash-tree'
 gem 'responders'
 gem 'sprockets', '~> 3.7'
 gem 'rswag'
+gem 'linkeddata'
+gem 'rdf'
+gem 'rdf-trig'
 
 
 group :development, :test do

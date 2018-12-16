@@ -2,13 +2,16 @@
 
 require 'swagger_helper'
 
-describe 'SEMCON API' do
+describe 'SEMCON BASE API' do
 	path '/api/info' do
-		get 'container information' do
+		get 'container overview' do
+			tags 'Basic'
 			produces 'application/json'
 			response '200', 'success' do
 				schema type: :object,
 					properties: {
+						title: { type: :sting },
+						image: { type: :sting },
 						records: { type: :integer }
 					},
 				required: [ 'records' ]
@@ -19,6 +22,7 @@ describe 'SEMCON API' do
 
 	path '/api/data' do
 		get 'read data' do
+			tags 'Basic'
 			produces 'application/json'
 			response '200', 'success' do
 				run_test! do |response|
@@ -29,6 +33,7 @@ describe 'SEMCON API' do
 			end
 		end
 		post 'write data' do
+			tags 'Basic'
 			consumes 'application/json'
 			parameter name: :input, in: :body
 			response '200', 'success' do
@@ -47,6 +52,7 @@ describe 'SEMCON API' do
 
 	path '/api/log' do
 		get 'log information' do
+			tags 'Basic'
 			produces 'application/json'
 			response '200', 'success' do
 				run_test! do |response|
