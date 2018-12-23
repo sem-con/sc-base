@@ -20,11 +20,14 @@
             "schema": {
               "type": "object",
               "properties": {
+                "uid": {
+                  "type": "string"
+                },
                 "title": {
-                  "type": "sting"
+                  "type": "string"
                 },
                 "image": {
-                  "type": "sting"
+                  "type": "string"
                 },
                 "records": {
                   "type": "integer"
@@ -128,6 +131,9 @@
         "responses": {
           "200": {
             "description": "success"
+          },
+          "422": {
+            "description": "invalid"
           }
         }
       }
@@ -146,7 +152,7 @@
             "name": "detail",
             "in": "path",
             "type": "string",
-            "description": "'info' for general information, 'example' for examplary input data",
+            "description": "'info' for general information, 'usage' for data usage policy, 'example' for examplary input data",
             "required": true
           }
         ],

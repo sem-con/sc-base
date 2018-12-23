@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
-  mount Rswag::Ui::Engine => '/api-docs'
-  mount Rswag::Api::Engine => '/api-docs'
+	mount Rswag::Ui::Engine => '/api-docs'
+	mount Rswag::Api::Engine => '/api-docs'
 	use_doorkeeper
 	namespace :api, defaults: { format: :json } do
 		scope module: :v1, constraints: ApiConstraints.new(version: 1, default: true) do
@@ -12,6 +12,7 @@ Rails.application.routes.draw do
 			match 'meta',         to: 'semantics#create',       via: 'post'
 			match 'meta',         to: 'semantics#show',	        via: 'get'
 			match 'meta/info',    to: 'semantics#show_info',    via: 'get'
+			match 'meta/usage',   to: 'semantics#show_usage',   via: 'get'
 			match 'meta/example', to: 'semantics#show_example', via: 'get'
 			match 'data',         to: 'stores#index',           via: 'get'
 			match 'data',         to: 'stores#create',          via: 'post'

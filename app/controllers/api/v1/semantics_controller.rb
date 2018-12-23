@@ -20,8 +20,13 @@ module Api
                     render plain: "",
                            status: 404
                 else
-                    render plain: Semantic.first.validation, 
-                           status: 200
+                    if Semantic.first.validation.to_s == ""
+                        render plain: "",
+                               status: 404
+                    else
+                        render plain: Semantic.first.validation, 
+                               status: 200
+                    end
                 end
             end
 
@@ -30,15 +35,39 @@ module Api
                     render json: {},
                            status: 200
                 else
-                    init = RDF::Repository.new()
-                    init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
-                    uc = nil
-                    init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#UserConfigurations" ? uc = g : nil }
-                    title = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new("http://purl.org/dc/elements/1.1/title"), :value] }.first.value.to_s
-                    description = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new("http://purl.org/dc/elements/1.1/description"), :value] }.first.value.to_s.strip
-                    render json: { "name": title, 
-                                   "description": description },
+                    if Semantic.first.validation.to_s == ""
+                        render json: {},
+                               status: 200
+                    else
+                        init = RDF::Repository.new()
+                        init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
+                        uc = nil
+                        init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#InitialConfiguration" ? uc = g : nil }
+                        title = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new("http://purl.org/dc/elements/1.1/title"), :value] }.first.value.to_s
+                        description = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new("http://purl.org/dc/elements/1.1/description"), :value] }.first.value.to_s.strip
+                        render json: { "name": title, 
+                                       "description": description },
+                               status: 200
+                    end
+                end
+            end
+
+            def show_usage
+                if Semantic.count == 0
+                    render json: {},
                            status: 200
+                else
+                    if Semantic.first.validation.to_s == ""
+                        render json: {},
+                               status: 200
+                    else
+                        init = RDF::Repository.new()
+                        init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
+                        uc = nil
+                        init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#UsagePolicy" ? uc = g : nil }
+                        render plain: uc.dump(:trig).to_s, 
+                               status: 200
+                    end
                 end
             end
 
@@ -47,44 +76,68 @@ module Api
                     render json: {},
                            status: 200
                 else
-                    init = RDF::Repository.new()
-                    init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
-                    uc = nil
-                    init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#UserConfigurations" ? uc = g : nil }
-                    example = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new("http://semantics.id/ns/semcon#exampleData"), :value] }.first.value.to_s.strip
-                    render json: { "example": example },
-                           status: 200
+                    if Semantic.first.validation.to_s == ""
+                        render json: {},
+                               status: 200
+                    else
+                        init = RDF::Repository.new()
+                        init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
+                        uc = nil
+                        init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#InitialConfiguration" ? uc = g : nil }
+                        example = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new("http://semantics.id/ns/semcon#hasExampleData"), :value] }.first.value.to_s.strip
+                        render plain: example.to_s,
+                               status: 200
+                    end
                 end
             end             
 
             def create
                 input_raw = params.to_json
-                if Semantic.count == 0
+                if Semantic.count == 0 or Semantic.first.validation.to_s == ""
                     input = JSON.parse(input_raw)["init"].to_s
 
                     # check if input is valid
                     # https://github.com/ruby-rdf/rdf-reasoner
-                    base_constraints = RDF::Repository.load("./config/base-constraints.ttl", format: :trig)
                     init = RDF::Reader.for(:trig).new(input)
+                    base_constraints = RDF::Repository.load("./config/base-constraints.trig", format: :trig)
 
-                    # # check if input is valid
-                    # shacl_validation_url = "https://semantic.ownyourdata.eu/api/validate/shacl"
-                    # response = HTTParty.post(shacl_validation_url, body: input )
-                    # if response.code.to_s == "200"
-                        Semantic.new(validation: input).save
+                    init_validation = {
+                        "init-config": init.dump(:trig).to_s,
+                        "base-constraints": base_constraints.dump(:trig).to_s
+                    }.stringify_keys
+
+                    # get init_validataion_url
+                    uf = nil
+                    base_constraints.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#BaseConfiguration" ? uf = g : nil }
+                    init_validation_url = RDF::Query.execute(uf) { pattern [:subject, RDF::URI.new("http://semantics.id/ns/semcon#initValidationService"), :value] }.first.value.to_s
+                    if init_validation_url == ""
+                        init_validation_url = "https://semantic.ownyourdata.eu/api/validate/init"
+                    end
+
+                    response = HTTParty.post(init_validation_url, 
+                        headers: { 'Content-Type' => 'application/json' },
+                        body: init_validation.to_json)
+
+                    # check if input is valid
+                    if response.code.to_s == "200"
+                        if Semantic.count == 0
+                            Semantic.new(validation: input).save
+                        else
+                            Semantic.update_attributes(validation: input)
+                        end
                         createLog({
                             "type": "write",
                             "scope": "meta information",
                             "request": request.remote_ip.to_s}.to_json)
                         render plain: "",
                                status: 200
-                    # else
-                    #     render json: { "error": "input is not a valid Shacl constraint"},
-                    #            status: 422
-                    #     return
-                    # end
+                    else
+                        render json: { "error": "input is not a valid"},
+                               status: 422
+                        return
+                    end
                 else
-                    render json: { "error": "validation already set"},
+                    render json: { "error": "container already initialized"},
                            status: 409
                 end
             end

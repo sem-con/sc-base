@@ -10,8 +10,9 @@ describe 'SEMCON BASE API' do
 			response '200', 'success' do
 				schema type: :object,
 					properties: {
-						title: { type: :sting },
-						image: { type: :sting },
+						uid: { type: :string },
+						title: { type: :string },
+						image: { type: :string },
 						records: { type: :integer }
 					},
 				required: [ 'records' ]
