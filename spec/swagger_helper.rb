@@ -16,10 +16,18 @@ RSpec.configure do |config|
     'v1/swagger.json' => {
       swagger: '2.0',
       info: {
-        title: 'API V1',
+        title: 'Semantic Container API',
         version: 'v1'
       },
-      paths: {}
+      paths: {},
+      securityDefinitions: {
+        Bearer: {
+          description: "Authorization token",
+          type: :apiKey,
+          name: 'Authorization',
+          in: :header
+        }
+      }
     }
   }
 end

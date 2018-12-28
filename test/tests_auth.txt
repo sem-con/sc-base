@@ -1,0 +1,30 @@
+docker rm -f test_auth
+docker run --name test_auth -p 4000:3000 -e AUTH=true semcon/sc-base
+docker run --name test_auth -p 4000:3000 -e AUTH=true -i semcon/sc-base /bin/init.sh "$(< test/init.trig)"
+
+IMAGE=semcon/sc-base:latest; docker run --name test_auth -e IMAGE_SHA256="$(docker image ls --no-trunc -q $IMAGE | tail -1)" -e IMAGE_NAME=$IMAGE -e AUTH=true -p 4000:3000 -i -d $IMAGE /bin/init.sh "$(< test/init.trig)"
+docker logs test_auth | grep 'APP_KEY\|APP_SECRET'
+
+# write data with admin scope
+export APP_KEY=`docker logs test_auth | grep APP_KEY | awk -F " " '{print $NF}'`; export APP_SECRET=`docker logs test_auth | grep APP_SECRET | awk -F " " '{print $NF}'`; export TOKEN=`curl -s -d grant_type=client_credentials -d client_id=$APP_KEY -d client_secret=$APP_SECRET -d scope=admin -X POST http://localhost:4000/oauth/token | jq -r '.access_token'`
+curl -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '[{"data":"value"}]' -X POST http://localhost:4000/api/data
+curl -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -X GET http://localhost:4000/api/info
+
+# create read scope and try to write data
+curl -H "Authorization: Bearer $TOKEN" -d name=app2 -d scopes=read -X POST http://localhost:4000/oauth/applications
+# update!!
+export TOKEN=`curl -s -d grant_type=client_credentials -d client_id= -d client_secret= -d scope=read -X POST http://localhost:4000/oauth/token | jq -r '.access_token'`
+curl -s -o /dev/null -w "%{http_code}" -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"data":"value2"}' -X POST http://localhost:4000/api/data
+# revoke token
+curl -F token=$TOKEN -X POST localhost:4000/oauth/revoke
+curl -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -X GET http://localhost:4000/api/info
+
+# create write scope and write data
+export APP_KEY=`docker logs test_auth | grep APP_KEY | awk -F " " '{print $NF}'`; export APP_SECRET=`docker logs test_auth | grep APP_SECRET | awk -F " " '{print $NF}'`; export TOKEN=`curl -s -d grant_type=client_credentials -d client_id=$APP_KEY -d client_secret=$APP_SECRET -d scope=admin -X POST http://localhost:4000/oauth/token | jq -r '.access_token'`
+curl -H "Authorization: Bearer $TOKEN" -d name=app3 -d scopes=write -X POST http://localhost:4000/oauth/applications
+# update!!
+export TOKEN=`curl -s -d grant_type=client_credentials -d client_id= -d client_secret= -d scope=write -X POST http://localhost:4000/oauth/token | jq -r '.access_token'`
+curl -s -o /dev/null -w "%{http_code}" -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"data":"value3"}' -X POST http://localhost:4000/api/data
+curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $TOKEN" -d name=app4 -d scopes=write -X POST http://localhost:4000/oauth/applications
+
+

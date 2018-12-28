@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20181222163442) do
+ActiveRecord::Schema.define(version: 20181227220825) do
 
   create_table "data", force: :cascade do |t|
     t.text "item"
@@ -61,6 +61,7 @@ ActiveRecord::Schema.define(version: 20181222163442) do
     t.string "scopes", default: "", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "confidential", default: true, null: false
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 

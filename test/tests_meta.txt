@@ -1,5 +1,5 @@
 docker rm -f test_meta
-docker run --name test_meta -p 4000:3000 -i semcon/sc-base /bin/init.sh "$(< ~/semcon/base/trig/init.trig)"
+docker run --name test_meta -p 4000:3000 -i semcon/sc-base /bin/init.sh "$(< test/init.trig)"
 
 
-IMAGE=semcon/sc-base:latest; docker run --name test_base -e IMAGE_SHA256="$(docker image ls --no-trunc -q $IMAGE | tail -1)" -e IMAGE_NAME=$IMAGE -p 4000:3000 -i $IMAGE /bin/init.sh "$(< ~/semcon/base/trig/init.trig)"
+IMAGE=semcon/sc-base:latest; docker run --name test_meta -e IMAGE_SHA256="$(docker image ls --no-trunc -q $IMAGE | tail -1)" -e IMAGE_NAME=$IMAGE -p 4000:3000 -i $IMAGE /bin/init.sh "$(< test/init.trig)"

@@ -123,7 +123,7 @@ module Api
                         if Semantic.count == 0
                             Semantic.new(validation: input).save
                         else
-                            Semantic.update_attributes(validation: input)
+                            Semantic.first.update_attributes(validation: input)
                         end
                         createLog({
                             "type": "write",

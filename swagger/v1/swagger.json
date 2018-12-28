@@ -1,10 +1,207 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "API V1",
+    "title": "Semantic Container API",
     "version": "v1"
   },
   "paths": {
+    "/oauth/token": {
+      "post": {
+        "summary": "request token",
+        "tags": [
+          "Authorization"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "input",
+            "in": "body"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "401": {
+            "description": "invalid"
+          }
+        }
+      }
+    },
+    "/oauth/token/info": {
+      "get": {
+        "summary": "show token information",
+        "tags": [
+          "Authorization"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "type": "string",
+            "name": "Authorization",
+            "required": true,
+            "description": "Client token"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "401": {
+            "description": "invalid request"
+          }
+        }
+      }
+    },
+    "/oauth/revoke": {
+      "post": {
+        "summary": "revoke token",
+        "tags": [
+          "Authorization"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "input",
+            "in": "body"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/oauth/applications": {
+      "post": {
+        "summary": "create access account",
+        "tags": [
+          "Authorization"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "type": "string",
+            "name": "Authorization",
+            "required": true,
+            "description": "Client token"
+          },
+          {
+            "in": "body",
+            "name": "input",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "scopes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "scopes"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "401": {
+            "description": "invalid token"
+          }
+        }
+      }
+    },
+    "/oauth/applications/{id}": {
+      "delete": {
+        "summary": "remove account",
+        "tags": [
+          "Authorization"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "type": "string",
+            "name": "Authorization",
+            "required": true,
+            "description": "Client token"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "'id' of account",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "401": {
+            "description": "invalid token"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/active": {
+      "get": {
+        "summary": "check if container is active",
+        "tags": [
+          "Basic"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "active": {
+                  "type": "boolean"
+                },
+                "auth": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "active",
+                "auth"
+              ]
+            }
+          }
+        }
+      }
+    },
     "/api/info": {
       "get": {
         "summary": "container overview",
@@ -75,7 +272,7 @@
             "description": "success"
           },
           "500": {
-            "description": "not an array"
+            "description": "invalid input"
           }
         }
       }
@@ -120,7 +317,7 @@
           "Semantic information"
         ],
         "consumes": [
-          "plain/text"
+          "application/json"
         ],
         "parameters": [
           {
@@ -165,6 +362,14 @@
           }
         }
       }
+    }
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "description": "Authorization token",
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
     }
   }
 }

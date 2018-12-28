@@ -20,17 +20,17 @@ describe 'SEMCON META API' do
 
 		post 'set container information' do
 			tags 'Semantic information'
-			consumes 'plain/text'
+			consumes 'application/json'
 			parameter name: :input, in: :body
 			response '200', 'success' do
-				let(:input) { "" }
+				let(:input) { { "init": file_fixture("init.trig").read } }
 				run_test! do
 					expect(Semantic.count).to eq(1)
 					expect(Log.count).to eq(1)
 				end
 			end
 			response '422', 'invalid' do
-				let(:input) { "invalid" }
+				let(:input) { { "init": "" } }
 				run_test! do
 					expect(Semantic.count).to eq(0)
 					expect(Log.count).to eq(0)

@@ -1,10 +1,30 @@
 # spec/integration/base_spec.rb
+# rake rswag:specs:swaggerize
 
 require 'swagger_helper'
 
 describe 'SEMCON BASE API' do
+	path '/api/active' do
+		get 'check if container is active' do
+			tags 'Basic'
+			produces 'application/json'
+			response '200', 'success' do
+				schema type: :object,
+					properties: {
+						active: { type: :boolean },
+						auth: { type: :boolean }
+					},
+				required: [ 'active', 'auth' ]
+				run_test!
+			end
+		end
+	end
+
 	path '/api/info' do
 		get 'container overview' do
+			before do
+				ENV["AUTH"] = ""
+			end
 			tags 'Basic'
 			produces 'application/json'
 			response '200', 'success' do
@@ -44,8 +64,8 @@ describe 'SEMCON BASE API' do
 					expect(Log.count).to eq(1)
 				end
 			end
-			response '500', 'not an array' do
-				let(:input) { { "asdf": "qwer", "ycxv": 4.2 } }
+			response '500', 'invalid input' do
+				let(:input) { "asdf" }
 				run_test!
 			end
 		end
@@ -64,4 +84,5 @@ describe 'SEMCON BASE API' do
 			end
 		end
 	end
+
 end

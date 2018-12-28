@@ -21,10 +21,14 @@ module Api
                        status: 200
             end
 
-            def create
+            def write
                 begin
                     new_items = []
-                    input = JSON.parse(params.to_json)['_json']
+                    if params.include?("_json")
+                        input = JSON.parse(params.to_json)["_json"]
+                    else
+                        input = JSON.parse(params.to_json).except("store", "format", "controller", "action")
+                    end
                     input.each do |item|
                         my_store = Store.new(item: item.to_json)
                         my_store.save
@@ -37,10 +41,12 @@ module Api
                         "request": request.remote_ip.to_s}.to_json)
                     render plain: "",
                            status: 200
-                rescue
+                rescue => ex
+                    # puts ex.to_s
                     render plain: "",
                            status: 500
                 end
+
                 # if Semantic.count == 0
                 #     render json: { "error": "semantic definition not set yet"},
                 #            status: 412
