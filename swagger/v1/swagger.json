@@ -2,7 +2,15 @@
   "swagger": "2.0",
   "info": {
     "title": "Semantic Container API",
-    "version": "v1"
+    "version": "v1",
+    "description": "Semantic Containers enable the secure and traceable exchange of defined data on specified usage conditions between multiple parties.\n \n Further information:\n - learn more about Semantic Containers at https://www.ownyourdata.eu/semcon\n - view other [OwnYourData Service API's](https://api-docs.ownyourdata.eu)",
+    "contact": {
+      "email": "office@ownyourdata.eu"
+    },
+    "license": {
+      "name": "MIT License",
+      "url": "https://opensource.org/licenses/MIT"
+    }
   },
   "paths": {
     "/oauth/token": {
