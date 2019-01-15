@@ -264,7 +264,7 @@
       "post": {
         "summary": "write data",
         "tags": [
-          "Basic"
+          "Usage"
         ],
         "consumes": [
           "application/json"

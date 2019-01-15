@@ -132,7 +132,7 @@ module Api
                         render plain: "",
                                status: 200
                     else
-                        render json: { "error": "input is not a valid"},
+                        render json: { "error": "input is not valid"},
                                status: 422
                         return
                     end

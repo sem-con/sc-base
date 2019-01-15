@@ -17,7 +17,7 @@ module Api
 
             def init
                 # clean up
-                uid = SecureRandom.hex(16)
+                uid = SecureRandom.uuid
                 Semantic.create!(uid: uid)
 
                 request_sh = "run.sh"

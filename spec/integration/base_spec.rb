@@ -65,7 +65,7 @@ describe 'SEMCON BASE API' do
 				end
 			end
 			response '500', 'invalid input' do
-				let(:input) { "asdf" }
+				let(:input) { "" }
 				run_test!
 			end
 		end
