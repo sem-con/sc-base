@@ -9,31 +9,104 @@ module Api
             respond_to :xml, only: []
 
             def index
-                retVal = []
-                Store.pluck(:item).each { |item| retVal << JSON(item) }
+                case container_format
+                when "CSV"
+                    content = [Store.pluck(:item).join("\n")]
+                when "RDF"
+                    content = []
+                    Store.pluck(:item).each { |item| content << item.to_s }
+                else
+                    content = []
+                    Store.pluck(:item).each { |item| content << JSON(item) }
+                end                    
+
+                provision = {
+                        "content": content,
+                        "usage-policy": container_usage_policy.to_s,
+                        "provenance": ""
+                    }.stringify_keys
+                provision_hash = Digest::SHA256.hexdigest(provision.to_json)
+                begin
+                    response = HTTParty.post("https://blockchain.ownyourdata.eu/api/doc?hash=" + provision_hash.to_s)
+                rescue => ex
+                    response = nil
+                end
+
+                # puts "URL: " + "https://blockchain.ownyourdata.eu/api/doc?hash=" + provision_hash.to_s
+                # puts "response: " + response.code.to_s
+                dlt_reference = ""
+                if !response.nil? && response.code.to_s == "200"
+                    if response.parsed_response["address"] == ""
+                        dlt_reference = "https://notary.ownyourdata.eu/en?hash=" + provision_hash.to_s
+                    else
+                        dlt_reference = {
+                            "dlt": "Ethereum",
+                            "address": response.parsed_response["address"],
+                            "audit-proof": response.parsed_response["audit-proof"]
+                        }.stringify_keys
+                    end
+                end
+
+                retVal = {
+                    "provision": provision,
+                    "validation": {
+                        "hash": provision_hash,
+                        "dlt-reference": dlt_reference
+                    }
+                }.stringify_keys
 
                 createLog({
                     "type": "read",
                     "scope": "all (" + Store.count.to_s + " records)",
                     "request": request.remote_ip.to_s}.to_json)
 
-                render json: retVal, 
+                render json: retVal.to_json, 
                        status: 200
             end
 
-            def write
-                # get input
-                if params.include?("_json")
-                    input = JSON.parse(params.to_json)["_json"]
+            def plain
+                retVal_type = container_format
+                case retVal_type
+                when "CSV"
+                    retVal = Store.pluck(:item).join("\n")
+                    render plain: retVal, 
+                           status: 200
+                when "RDF"
+                    retVal = Store.pluck(:item).join("\n")
+                    render plain: retVal, 
+                           status: 200
                 else
-                    input = JSON.parse(params.to_json).except("store", "format", "controller", "action")
+                    retVal_type = "JSON"
+                    retVal = []
+                    Store.pluck(:item).each { |item| retVal << JSON(item) }
+                    render json: retVal, 
+                           status: 200
+                end                    
+                createLog({
+                    "type": "read plain " + retVal_type.to_s,
+                    "scope": "all (" + Store.count.to_s + " records)",
+                    "request": request.remote_ip.to_s}.to_json)
+
+            end
+
+            def write
+                begin
+                    if params.include?("_json")
+                        input = JSON.parse(params.to_json)["_json"]
+                    else
+                        input = JSON.parse(params.to_json).except("store", "format", "controller", "action")
+                    end
+                rescue => ex
+                    render plain: "",
+                           status: 422
+                    return
                 end
+                # get input
 
                 # determine type of input
                 # 1) simple array with data
                 # 2) has top-level "content" attribute
                 # 3) has top-level "provision" attributes
-                is_trig = true
                 usage_policy = ""
                 content = []
                 if input.class == Hash
@@ -49,16 +122,43 @@ module Api
                         else
                             # simple array with data
                             content = input
-                            is_trig = false
                         end
                     end
                 else
-                    is_trig = false
                     content = input
                 end
 
-                if is_trig
-                    # check if it is a valid trig
+                cf = container_format
+                case cf
+                when "CSV"
+                    col_sep = ","
+                    begin
+                        suppress_output do
+                            tmp = CSV.parse(content, headers: true, col_sep: ",")
+                        end
+                    rescue => ex
+                        begin
+                            suppress_output do
+                                tmp = CSV.parse(content, headers: true, col_sep: ";")
+                            end
+                        rescue => ex
+                            render plain: "",
+                                   status: 422
+                            return
+                        end
+                        col_sep = ";"
+                    end
+                    if Store.count > 0
+                        # omit header if there is already data
+                        content = content.split("\n").drop(1)
+                    else
+                        content = content.split("\n")
+                    end
+
+                when "JSON"
+                    # nothing to do, content is already JSON
+
+                when "RDF"
                     submission = RDF::Repository.new()
                     begin
                         suppress_output do
@@ -67,19 +167,19 @@ module Api
                     rescue => ex
                         is_trig = false
                     end
+                    if submission.count > 0
+                        content = submission.dump(:ttl).strip.split(" .").map { |e| "#{e.strip} ." }
+                        # validate data format ======================
+                        # missing !!!
+                    else
+                        content = ""
+                    end
                 end
-                if is_trig
-                    is_trig = (submission.count > 0)
-                end
 
-                # if it is a valid trig ...
-                if is_trig
-                    # ... extract data
-                    content = submission.dump(:ttl).strip.split(" .").map { |e| "#{e.strip} ." }
+                # validate if provided usage policy (Data Subject) 
+                # conforms to container policy (Data Controller) ==========
 
-                    # validate if provided usage policy (Data Subject) 
-                    # conforms to container policy (Data Controller) ==========
-
+                if usage_policy.to_s != ""
                     # get validation URL
                     bc = nil
                     base_constraints = RDF::Repository.load("./config/base-constraints.trig", format: :trig)
@@ -100,10 +200,9 @@ module Api
                     end
 
                     data_subject = up.dump(:trig).to_s
-
+                    uc = nil
                     init = RDF::Repository.new()
                     init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
-                    uc = nil
                     init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#UsagePolicy" ? uc = g : nil }
                     data_controller = uc.dump(:trig).to_s
 
@@ -132,15 +231,15 @@ module Api
                         body: usage_matching.to_json)
 
                     if response.code.to_s != "200"
+                        createLog({
+                            "type": "write",
+                            "scope": "invalid usage-policy",
+                            "request": request.remote_ip.to_s}.to_json)
+
                         render json: { "error": "provided usages policy not applicable for container" },
-                               status: 500
+                               status: 412
                         return
                     end
-
-                    # validate data format ======================
-
-                else
-                    content = input
                 end
 
                 # write data to container store
@@ -155,7 +254,12 @@ module Api
                         content = [content]
                     end
                     content.each do |item|
-                        my_store = Store.new(item: item.to_json)
+                        case cf
+                        when "RDF", "CSV"
+                            my_store = Store.new(item: item)
+                        else
+                            my_store = Store.new(item: item.to_json)
+                        end
                         my_store.save
                         new_items << my_store.id
                     end

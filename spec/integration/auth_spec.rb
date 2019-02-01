@@ -1,4 +1,4 @@
-# spec/integration/base_spec.rb
+# spec/integration/auth_spec.rb
 # https://stackoverflow.com/questions/35822119/rspec-requests-an-access-token-from-doorkeeper-and-then-always-gets-invalid-gran
 
 require 'swagger_helper'

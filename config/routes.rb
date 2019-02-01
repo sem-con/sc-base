@@ -19,6 +19,7 @@ Rails.application.routes.draw do
 			match 'meta/usage',   to: 'semantics#show_usage',   via: 'get'
 			match 'meta/example', to: 'semantics#show_example', via: 'get'
 			match 'data',         to: 'stores#index',           via: 'get'
+			match 'data/plain',   to: 'stores#plain',           via: 'get'
 			match 'data',         to: 'stores#write',           via: 'post'
 			match 'info',         to: 'infos#index',            via: 'get'
 			match 'log',          to: 'logs#index',             via: 'get'

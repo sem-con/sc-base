@@ -1,3 +1,3 @@
-docker run -p 4000:3000 -it --rm semcon/sc-base /bin/init.sh "$(< test/init.trig)"
+docker run -p 4000:3000 -it --rm --name semcon semcon/sc-base /bin/init.sh "$(< test/init.trig)"
 
 curl -H "Content-Type: application/json" -d "$(< test/data_usage.json)" -X POST http://localhost:4000/api/data

@@ -1,0 +1,7 @@
+# testing JSON
+docker run -p 4000:3000 -it --rm --name semcon semcon/sc-base /bin/init.sh "$(< spec/fixtures/files/init_format_json.trig)"
+curl -H "Content-Type: application/json" -d "$(< spec/fixtures/files/test_valid.json)" -X POST http://localhost:4000/api/data
+
+# testing CSV
+docker run -p 4000:3000 -it --rm --name semcon semcon/sc-base /bin/init.sh "$(< spec/fixtures/files/init_format_csv.trig)"
+cat spec/fixtures/files/test_valid.csv | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g; s/\"/\\"/g' | echo "{\"content\":\"$(cat - )\"}" | curl -H "Content-Type: application/json" -d "$(cat - )" -X POST http://localhost:4000/api/data

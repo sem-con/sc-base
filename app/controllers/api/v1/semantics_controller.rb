@@ -61,11 +61,7 @@ module Api
                         render json: {},
                                status: 200
                     else
-                        init = RDF::Repository.new()
-                        init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
-                        uc = nil
-                        init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#UsagePolicy" ? uc = g : nil }
-                        render plain: uc.dump(:trig).to_s, 
+                        render plain: container_usage_policy.to_s, 
                                status: 200
                     end
                 end

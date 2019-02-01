@@ -248,9 +248,9 @@
     },
     "/api/data": {
       "get": {
-        "summary": "read data",
+        "summary": "read data with default output structure",
         "tags": [
-          "Basic"
+          "Format"
         ],
         "produces": [
           "application/json"
@@ -264,7 +264,7 @@
       "post": {
         "summary": "write data",
         "tags": [
-          "Usage"
+          "Basic"
         ],
         "consumes": [
           "application/json"
@@ -281,6 +281,12 @@
           },
           "500": {
             "description": "invalid input"
+          },
+          "422": {
+            "description": "invalid format"
+          },
+          "412": {
+            "description": "non-matching usage policy"
           }
         }
       }
@@ -290,6 +296,22 @@
         "summary": "log information",
         "tags": [
           "Basic"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/data/plain": {
+      "get": {
+        "summary": "read raw data",
+        "tags": [
+          "Format"
         ],
         "produces": [
           "application/json"

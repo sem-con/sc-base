@@ -10,7 +10,7 @@ describe 'SEMCON USAGE API' do
 				@sem = Semantic.new(validation: file_fixture("init.trig").read)
 				@sem.save!
 			end
-			tags 'Usage'
+			tags 'Basic'
 			consumes 'application/json'
 			parameter name: :input, in: :body
 			response '200', 'success' do
@@ -20,6 +20,13 @@ describe 'SEMCON USAGE API' do
 					expect(Log.count).to eq(1)
 				end
 			end
+			response '412', 'non-matching usage policy' do
+				let(:input) { JSON.parse(file_fixture("data_invalid-usage.json").read) }
+				run_test! do
+					expect(Store.count).to eq(0)
+					expect(Log.count).to eq(1)
+				end
+			end				
 			response '500', 'invalid input' do
 				let(:input) { "" }
 				run_test!

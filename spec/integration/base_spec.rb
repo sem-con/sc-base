@@ -48,7 +48,7 @@ describe 'SEMCON BASE API' do
 			response '200', 'success' do
 				run_test! do |response|
 					data = JSON.parse(response.body)
-					expect(data.length).to eq(0)
+					expect(data["provision"]["content"].length).to eq(0)
 					expect(Log.count).to eq(1)
 				end
 			end
