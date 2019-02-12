@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 gem 'rails', '~> 5.1.6'
-gem 'sqlite3'
+gem 'sqlite3', '~> 1.3.6'
 gem 'puma', '~> 3.7'
 gem 'doorkeeper', '~> 4.4.0'
 gem 'rack-cors', require: 'rack/cors'

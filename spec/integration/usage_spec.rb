@@ -4,7 +4,7 @@ require 'swagger_helper'
 
 describe 'SEMCON USAGE API' do
 	path '/api/data' do
-		post 'write data' do
+		post 'write data' do # test usage policy + writing RDF
 			before do
 				Semantic.destroy_all
 				@sem = Semantic.new(validation: file_fixture("init.trig").read)

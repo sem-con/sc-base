@@ -165,12 +165,41 @@ module Api
                             submission << RDF::Reader.for(:ttl).new(content.to_s)
                         end
                     rescue => ex
-                        is_trig = false
+                        render plain: "",
+                               status: 422
+                        return
                     end
                     if submission.count > 0
                         content = submission.dump(:ttl).strip.split(" .").map { |e| "#{e.strip} ." }
                         # validate data format ======================
-                        # missing !!!
+                        
+                        # get data validation URL
+                        bc = nil
+                        base_constraints = RDF::Repository.load("./config/base-constraints.trig", format: :trig)
+                        base_constraints.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? bc = g : nil }
+                        data_validation_url = RDF::Query.execute(bc) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "dataValidationService"), :value] }.first.value.to_s rescue ""
+                        if data_validation_url == ""
+                            data_validation_url = SEMANTIC_SERVICE + "/validate/data"
+                        end
+
+                        # get constraint
+
+                        # build data validation JSON
+                        record = {
+                            "content-data": content.join("\n"),
+                            "content-constraints": data_constraints.to_s
+                        }.stringify_keys
+                        
+                        # query service if data is valid
+                        response = HTTParty.post(data_validation_url, 
+                            headers: { 'Content-Type' => 'application/json' },
+                            body: record.to_json)
+
+                        if response.code.to_s != "200"
+                            render json: { "error": "data does not match semantic constraints" },
+                                   status: 412
+                            return
+                        end
                     else
                         content = ""
                     end
@@ -183,10 +212,10 @@ module Api
                     # get validation URL
                     bc = nil
                     base_constraints = RDF::Repository.load("./config/base-constraints.trig", format: :trig)
-                    base_constraints.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#BaseConfiguration" ? bc = g : nil }
-                    usage_matching_url = RDF::Query.execute(bc) { pattern [:subject, RDF::URI.new("http://semantics.id/ns/semcon#usagePolicyValidationService"), :value] }.first.value.to_s
+                    base_constraints.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? bc = g : nil }
+                    usage_matching_url = RDF::Query.execute(bc) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "usagePolicyValidationService"), :value] }.first.value.to_s
                     if usage_matching_url == ""
-                        usage_matching_url = "https://semantic.ownyourdata.eu/api/validate/usage-policy"
+                        usage_matching_url = SEMANTIC_SERVICE + "/validate/usage-policy"
                     end
 
                     # build usage matching trig
@@ -203,10 +232,10 @@ module Api
                     uc = nil
                     init = RDF::Repository.new()
                     init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
-                    init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#UsagePolicy" ? uc = g : nil }
+                    init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "UsagePolicy" ? uc = g : nil }
                     data_controller = uc.dump(:trig).to_s
 
-                    intro  = "@prefix sc: <http://semantics.id/ns/semcon#> .\n"
+                    intro  = "@prefix sc: <" + SEMCON_ONTOLOGY + "> .\n"
                     intro += "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
                     intro += "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n"
                     intro += "@prefix spl: <https://www.specialprivacy.eu/langs/usage-policy#> .\n"
@@ -216,10 +245,10 @@ module Api
                     intro += "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
 
                     dataSubject_intro = "sc:DataSubjectPolicy rdf:type owl:Class ;\n"
-                    data_subject = data_subject.split("\n")[2..-1].join("\n")
+                    data_subject = data_subject.strip.split("\n")[2..-1].join("\n")
 
                     dataController_intro = "sc:DataControllerPolicy rdf:type owl:Class ;\n"
-                    data_controller = data_controller.split("\n")[3..-2].join("\n")
+                    data_controller = data_controller.strip.split("\n")[3..-2].join("\n")
 
                     usage_matching = {
                         "usage-policy": intro + dataSubject_intro + data_subject + "\n" + dataController_intro + data_controller

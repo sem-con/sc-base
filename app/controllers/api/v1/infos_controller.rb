@@ -14,8 +14,8 @@ module Api
                         init = RDF::Repository.new()
                         init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
                         uc = nil
-                        init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#InitialConfiguration" ? uc = g : nil }
-                        title = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new("http://purl.org/dc/elements/1.1/title"), :value] }.first.value.to_s
+                        init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "InitialConfiguration" ? uc = g : nil }
+                        title = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new(PURL_TITLE), :value] }.first.value.to_s
                         retVal["title"] = title
                     end
                 end

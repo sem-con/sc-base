@@ -13,8 +13,10 @@ RUN mkdir -p $RAILS_ROOT/tmp/pids && \
 
 COPY Gemfile $WORKDIR
 
-RUN bundle install && \
-	gem install bundler
+RUN gem update --system && \
+	gem install bundler && \
+	bundle install && \
+	bundle update --bundler
 
 COPY . .
 

@@ -9,14 +9,14 @@ module ApplicationHelper
             init = RDF::Repository.new()
             init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
             ic = nil
-            init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#InitialConfiguration" ? ic = g : nil }
-            data_format = RDF::Query.execute(ic) { pattern [:subject, RDF::URI.new("http://semantics.id/ns/semcon#hasNativeSyntax"), :value] }.first.value.to_s
+            init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "InitialConfiguration" ? ic = g : nil }
+            data_format = RDF::Query.execute(ic) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "hasNativeSyntax"), :value] }.first.value.to_s
             case data_format.to_s
             when "http://www.w3.org/ns/formats/Turtle"
                 "RDF"
-            when "http://semantics.id/ns/semcon#JSON" #"http://www.w3id.org/semcon/formats/JSON"
+            when SEMCON_ONTOLOGY + "JSON" #"http://www.w3id.org/semcon/formats/JSON"
                 "JSON"
-            when "http://semantics.id/ns/semcon#CSV"
+            when SEMCON_ONTOLOGY + "CSV"
                 "CSV"
             else
                 nil
@@ -31,12 +31,23 @@ module ApplicationHelper
             init = RDF::Repository.new()
             init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
             uc = nil
-            init.each_graph{ |g| g.graph_name == "http://semantics.id/ns/semcon#UsagePolicy" ? uc = g : nil }
+            init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "UsagePolicy" ? uc = g : nil }
             uc.dump(:trig).to_s
         else 
             nil
         end
+    end
 
+    def data_constraints
+        if Semantic.count > 0
+            init = RDF::Repository.new()
+            init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
+            dc = nil
+            init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "DataConstraint" ? dc = g : nil }
+            dc.dump(:trig).to_s.strip.split("\n")[1..-2].join("\n")
+        else 
+            nil
+        end
     end
 
     def suppress_output
