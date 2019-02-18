@@ -10,7 +10,7 @@ describe 'SEMCON USAGE API' do
 				@sem = Semantic.new(validation: file_fixture("init.trig").read)
 				@sem.save!
 			end
-			tags 'Basic'
+			tags 'Data access'
 			consumes 'application/json'
 			parameter name: :input, in: :body
 			response '200', 'success' do

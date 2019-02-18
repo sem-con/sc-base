@@ -6,7 +6,7 @@ require 'swagger_helper'
 describe 'SEMCON BASE API' do
 	path '/api/active' do
 		get 'check if container is active' do
-			tags 'Basic'
+			tags 'Container information'
 			produces 'application/json'
 			response '200', 'success' do
 				schema type: :object,
@@ -25,7 +25,7 @@ describe 'SEMCON BASE API' do
 			before do
 				ENV["AUTH"] = ""
 			end
-			tags 'Basic'
+			tags 'Container information'
 			produces 'application/json'
 			response '200', 'success' do
 				schema type: :object,
@@ -43,7 +43,7 @@ describe 'SEMCON BASE API' do
 
 	path '/api/data' do
 		get 'read data' do
-			tags 'Basic'
+			tags 'Data access'
 			produces 'application/json'
 			response '200', 'success' do
 				run_test! do |response|
@@ -54,7 +54,7 @@ describe 'SEMCON BASE API' do
 			end
 		end
 		post 'write data' do
-			tags 'Basic'
+			tags 'Data access'
 			consumes 'application/json'
 			parameter name: :input, in: :body
 			response '200', 'success' do
@@ -73,7 +73,7 @@ describe 'SEMCON BASE API' do
 
 	path '/api/log' do
 		get 'log information' do
-			tags 'Basic'
+			tags 'Container information'
 			produces 'application/json'
 			response '200', 'success' do
 				run_test! do |response|

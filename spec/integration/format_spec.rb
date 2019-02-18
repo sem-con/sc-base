@@ -11,7 +11,7 @@ describe 'SEMCON USAGE API' do
 				@sem = Semantic.new(validation: file_fixture("init_format_csv.trig").read)
 				@sem.save!
 			end
-			tags 'Format'
+			tags 'Data access'
 			consumes 'application/json'
 			parameter name: :input, in: :body
 			response '200', 'success' do
@@ -43,7 +43,7 @@ describe 'SEMCON USAGE API' do
 				@sem = Semantic.new(validation: file_fixture("init_format_json.trig").read)
 				@sem.save!
 			end
-			tags 'Format'
+			tags 'Data access'
 			consumes 'application/json'
 			parameter name: :input, in: :body
 			response '200', 'success' do
@@ -56,7 +56,7 @@ describe 'SEMCON USAGE API' do
 		end
 
 		get 'read data' do
-			tags 'Format'
+			tags 'Data access'
 			produces 'application/json'
 			response '200', 'success' do
 				run_test! do |response|
@@ -75,16 +75,18 @@ describe 'SEMCON USAGE API' do
 				Store.destroy_all
 				@store = Store.new(item: "22332;\"Klagenfurt/Flughafen\";447;\"25-02-2029\";\"25:00\";-2,3;-5,4;73;256;5;268;23,7;0;2022,3;956,8;200")
 				@store.save!
+				@store = Store.new(item: "22333;\"Klagenfurt/Flughafen\";447;\"25-02-2029\";\"25:00\";-2,3;-5,4;73;256;5;268;23,7;0;2022,3;956,8;200")
+				@store.save!
 			end
-			tags 'Format'
+			tags 'Data access'
 			produces 'application/json'
 			response '200', 'success' do
 				run_test! do |response|
 					data = JSON.parse(response.body)
-					data_parsed = CSV.parse(data["provision"]["content"].first, col_sep: ";")
+					data_parsed = CSV.parse(data["provision"]["content"], col_sep: ";")
 					expect(data.length).to eq(2)
-					expect(data["provision"]["content"].length).to eq(1)
-					expect(data_parsed.first.length).to eq(16)
+					expect(data["provision"]["content"].length).to eq(201)
+					expect(data_parsed.length).to eq(2)
 					expect(Log.count).to eq(1)
 				end
 			end
@@ -101,7 +103,7 @@ describe 'SEMCON USAGE API' do
 				@store = Store.new(item: "22332;\"Klagenfurt/Flughafen\";447;\"25-02-2029\";\"25:00\";-2,3;-5,4;73;256;5;268;23,7;0;2022,3;956,8;200")
 				@store.save!
 			end
-			tags 'Format'
+			tags 'Data access'
 			produces 'application/json'
 			response '200', 'success' do
 				run_test! do |response|

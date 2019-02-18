@@ -1,5 +1,5 @@
-@prefix : <http://semantics.id/ns/semcon#> .
-@prefix scr: <http://semantics.id/ns/sc-resource/> .
+@prefix : <http://w3id.org/semcon/ns/ontology#> .
+@prefix scr: <http://w3id.org/semcon/resource/> .
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -53,7 +53,7 @@
     # data - classifications
     :hasTag "" ;
     # data format - inspired from void
-    
+    :hasNativeSyntax w3c-format:Turtle ;
     # example data in plain string
     :hasExampleData """
       

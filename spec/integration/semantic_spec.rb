@@ -11,7 +11,7 @@ describe 'SEMCON USAGE API' do
 				@sem = Semantic.new(validation: file_fixture("init_seismic.trig").read)
 				@sem.save!
 			end
-			tags 'Semantic'
+			tags 'Data access'
 			consumes 'application/json'
 			parameter name: :input, in: :body
 			response '200', 'success' do
@@ -38,7 +38,7 @@ describe 'SEMCON USAGE API' do
 				@store = Store.new(item: "22332;\"Klagenfurt/Flughafen\";447;\"25-02-2029\";\"25:00\";-2,3;-5,4;73;256;5;268;23,7;0;2022,3;956,8;200")
 				@store.save!
 			end
-			tags 'Format'
+			tags 'Data access'
 			produces 'application/json'
 			response '200', 'success' do
 				run_test! do |response|
@@ -50,4 +50,52 @@ describe 'SEMCON USAGE API' do
 			end
 		end
 	end
+
+	path '/api/data/full' do
+		get 'read data with all available attributes' do
+			before do
+				Semantic.destroy_all
+				@sem = Semantic.new(validation: file_fixture("init_format_csv.trig").read)
+				@sem.save!
+				Store.destroy_all
+				@store = Store.new(item: "22332;\"Klagenfurt/Flughafen\";447;\"25-02-2029\";\"25:00\";-2,3;-5,4;73;256;5;268;23,7;0;2022,3;956,8;200")
+				@store.save!
+			end
+			tags 'Data access'
+			produces 'application/json'
+			response '200', 'success' do
+				run_test! do |response|
+					data = response.body
+					data_parsed = JSON.parse(data)
+					expect(data_parsed["provision"].length).to eq(3)
+					expect(data_parsed["validation"].length).to eq(3)
+					expect(Log.count).to eq(1)
+				end
+			end
+		end
+	end
+
+	path '/api/data/provision' do
+		get 'read data with usage policy and provenance information' do
+			before do
+				Semantic.destroy_all
+				@sem = Semantic.new(validation: file_fixture("init_format_csv.trig").read)
+				@sem.save!
+				Store.destroy_all
+				@store = Store.new(item: "22332;\"Klagenfurt/Flughafen\";447;\"25-02-2029\";\"25:00\";-2,3;-5,4;73;256;5;268;23,7;0;2022,3;956,8;200")
+				@store.save!
+			end
+			tags 'Data access'
+			produces 'application/json'
+			response '200', 'success' do
+				run_test! do |response|
+					data = response.body
+					data_parsed = JSON.parse(data)
+					expect(data_parsed.length).to eq(3)
+					expect(Log.count).to eq(1)
+				end
+			end
+		end
+	end
+
 end

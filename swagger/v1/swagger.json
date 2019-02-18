@@ -183,7 +183,7 @@
       "get": {
         "summary": "check if container is active",
         "tags": [
-          "Basic"
+          "Container information"
         ],
         "produces": [
           "application/json"
@@ -214,7 +214,7 @@
       "get": {
         "summary": "container overview",
         "tags": [
-          "Basic"
+          "Container information"
         ],
         "produces": [
           "application/json"
@@ -250,7 +250,7 @@
       "get": {
         "summary": "read data with default output structure",
         "tags": [
-          "Format"
+          "Data access"
         ],
         "produces": [
           "application/json"
@@ -264,7 +264,7 @@
       "post": {
         "summary": "write data",
         "tags": [
-          "Basic"
+          "Data access"
         ],
         "consumes": [
           "application/json"
@@ -295,7 +295,7 @@
       "get": {
         "summary": "log information",
         "tags": [
-          "Basic"
+          "Container information"
         ],
         "produces": [
           "application/json"
@@ -311,7 +311,7 @@
       "get": {
         "summary": "read raw data",
         "tags": [
-          "Format"
+          "Data access"
         ],
         "produces": [
           "application/json"
@@ -389,6 +389,38 @@
           },
           "404": {
             "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/data/full": {
+      "get": {
+        "summary": "read data with all available attributes",
+        "tags": [
+          "Data access"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/data/provision": {
+      "get": {
+        "summary": "read data with usage policy and provenance information",
+        "tags": [
+          "Data access"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
           }
         }
       }
