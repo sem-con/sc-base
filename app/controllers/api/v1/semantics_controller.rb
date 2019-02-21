@@ -42,7 +42,7 @@ module Api
                         init = RDF::Repository.new()
                         init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
                         uc = nil
-                        init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "InitialConfiguration" ? uc = g : nil }
+                        init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? uc = g : nil }
                         title = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new(PURL_TITLE), :value] }.first.value.to_s
                         description = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new(PURL_DESCRIPTION), :value] }.first.value.to_s.strip
                         render json: { "name": title, 
@@ -79,7 +79,7 @@ module Api
                         init = RDF::Repository.new()
                         init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
                         uc = nil
-                        init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "InitialConfiguration" ? uc = g : nil }
+                        init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? uc = g : nil }
                         example = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "hasExampleData"), :value] }.first.value.to_s.strip
                         render plain: example.to_s,
                                status: 200
@@ -95,16 +95,16 @@ module Api
                     # check if input is valid
                     # https://github.com/ruby-rdf/rdf-reasoner
                     init = RDF::Reader.for(:trig).new(input)
-                    base_constraints = RDF::Repository.load("./config/base-constraints.trig", format: :trig)
+                    image_constraints = RDF::Repository.load("./config/image-constraints.trig", format: :trig)
 
                     init_validation = {
-                        "init-config": init.dump(:trig).to_s,
-                        "base-constraints": base_constraints.dump(:trig).to_s
+                        "base-config": init.dump(:trig).to_s,
+                        "image-constraints": image_constraints.dump(:trig).to_s
                     }.stringify_keys
 
                     # get init_validataion_url
                     uf = nil
-                    base_constraints.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? uf = g : nil }
+                    image_constraints.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "ImageConfiguration" ? uf = g : nil }
                     init_validation_url = RDF::Query.execute(uf) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "initValidationService"), :value] }.first.value.to_s
                     if init_validation_url == ""
                         init_validation_url = SEMANTIC_SERVICE + "/validate/init"

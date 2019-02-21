@@ -225,8 +225,8 @@ module Api
                         
                         # get data validation URL
                         bc = nil
-                        base_constraints = RDF::Repository.load("./config/base-constraints.trig", format: :trig)
-                        base_constraints.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? bc = g : nil }
+                        image_constraints = RDF::Repository.load("./config/image-constraints.trig", format: :trig)
+                        image_constraints.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "ImageConfiguration" ? bc = g : nil }
                         data_validation_url = RDF::Query.execute(bc) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "dataValidationService"), :value] }.first.value.to_s rescue ""
                         if data_validation_url == ""
                             data_validation_url = SEMANTIC_SERVICE + "/validate/data"
@@ -262,8 +262,8 @@ module Api
                 if usage_policy.to_s != ""
                     # get validation URL
                     bc = nil
-                    base_constraints = RDF::Repository.load("./config/base-constraints.trig", format: :trig)
-                    base_constraints.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? bc = g : nil }
+                    image_constraints = RDF::Repository.load("./config/image-constraints.trig", format: :trig)
+                    image_constraints.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "ImageConfiguration" ? bc = g : nil }
                     usage_matching_url = RDF::Query.execute(bc) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "usagePolicyValidationService"), :value] }.first.value.to_s
                     if usage_matching_url == ""
                         usage_matching_url = SEMANTIC_SERVICE + "/validate/usage-policy"

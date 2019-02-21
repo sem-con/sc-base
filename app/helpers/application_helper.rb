@@ -9,7 +9,7 @@ module ApplicationHelper
             init = RDF::Repository.new()
             init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
             ic = nil
-            init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "InitialConfiguration" ? ic = g : nil }
+            init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? ic = g : nil }
             data_format = RDF::Query.execute(ic) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "hasNativeSyntax"), :value] }.first.value.to_s # rescue ""
             case data_format.to_s
             when "http://www.w3.org/ns/formats/Turtle"
