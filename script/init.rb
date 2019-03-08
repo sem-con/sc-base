@@ -5,7 +5,7 @@ require 'httparty'
 require 'linkeddata'
 require 'rdf'
 
-config_raw = ARGV.pop
+config_raw = ARGV.pop.dup.force_encoding("utf-8")
 
 init_url = "http://localhost:3000/api/init"
 if config_raw.to_s == ""

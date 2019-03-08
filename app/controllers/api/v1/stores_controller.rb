@@ -12,16 +12,22 @@ module Api
 
             def get_provision(params, logstr)
                 retVal_type = container_format
+                timeStart = Time.now.utc
                 retVal_data = getData(params)
+                timeEnd = Time.now.utc
                 content = []
                 case retVal_type.to_s
                 when "JSON"
                     retVal_data.each { |item| content << JSON(item) }
+                    content_hash = Digest::SHA256.hexdigest(content.to_json)
                 when "RDF"
                     retVal_data.each { |item| content << item.to_s }
+                    content_hash = Digest::SHA256.hexdigest(content.to_s)
                 else
                     content = retVal_data.join("\n")
+                    content_hash = Digest::SHA256.hexdigest(content.to_s)
                 end
+                param_str = request.query_string.to_s
 
                 createLog({
                     "type": logstr,
@@ -31,7 +37,7 @@ module Api
                 {
                     "content": content,
                     "usage-policy": container_usage_policy.to_s,
-                    "provenance": getProvenance
+                    "provenance": getProvenance(content_hash, param_str, timeStart, timeEnd)
                 }.stringify_keys
             end
 
@@ -44,8 +50,6 @@ module Api
                     response = nil
                 end
 
-                # puts "URL: " + "https://blockchain.ownyourdata.eu/api/doc?hash=" + provision_hash.to_s
-                # puts "response: " + response.code.to_s
                 dlt_reference = ""
                 if !response.nil? && response.code.to_s == "200"
                     if response.parsed_response["address"] == ""
@@ -101,8 +105,6 @@ module Api
                     response = nil
                 end
 
-                # puts "URL: " + "https://blockchain.ownyourdata.eu/api/doc?hash=" + provision_hash.to_s
-                # puts "response: " + response.code.to_s
                 dlt_reference = ""
                 trusted_timestamp = ""
                 if !response.nil? && response.code.to_s == "200"
@@ -162,13 +164,15 @@ module Api
                 if input.class == Hash
                     if !input["provision"].nil?
                         # has top-level "provision" attributes
-                        content = input["provision"]["content"]
-                        usage_policy = input["provision"]["usage-policy"]
+                        content = input["provision"]["content"] rescue ""
+                        usage_policy = input["provision"]["usage-policy"] rescue ""
+                        provenance = input["provision"]["provenance"] rescue ""
                     else
                         if !input["content"].nil?
                             # has top-level "content" attribute
-                            content = input["content"]
-                            usage_policy = input["usage-policy"]
+                            content = input["content"] rescue ""
+                            usage_policy = input["usage-policy"] rescue ""
+                            provenance = input["provenance"] rescue ""
                         else
                             # simple array with data
                             content = input
@@ -312,16 +316,18 @@ module Api
                             headers: { 'Content-Type' => 'application/json' },
                             body: usage_matching.to_json)
 
-                        if response.code.to_s != "200"
-                            createLog({
-                                "type": "write",
-                                "scope": "invalid usage-policy",
-                                "request": request.remote_ip.to_s}.to_json)
+# !!! enable as soon as usage policy matching works !!!
+                        # if response.code.to_s != "200"
+                        #     createLog({
+                        #         "type": "write",
+                        #         "scope": "invalid usage-policy",
+                        #         "request": request.remote_ip.to_s}.to_json)
 
-                            render json: { "error": "provided usages policy not applicable for container" },
-                                   status: 412
-                            return
-                        end
+                        #     render json: { "error": "provided usages policy not applicable for container" },
+                        #            status: 412
+                        #     return
+                        # end
+# !!!
                     end
                 end
 
@@ -336,16 +342,29 @@ module Api
                         end
                         content = [content]
                     end
+
+                    # write provenance
+                    prov = Provenance.new(
+                        prov: provenance, 
+                        input_hash: Digest::SHA256.hexdigest(input.to_json),
+                        startTime: Time.now.utc)
+                    prov.save
+                    prov_id = prov.id
+
+                    # write data
                     content.each do |item|
                         case cf
                         when "RDF", "CSV"
-                            my_store = Store.new(item: item)
+                            my_store = Store.new(item: item, prov_id: prov_id)
                         else
-                            my_store = Store.new(item: item.to_json)
+                            my_store = Store.new(item: item.to_json, prov_id: prov_id)
                         end
                         my_store.save
                         new_items << my_store.id
                     end
+
+                    Provenance.find(prov_id).update_attributes(
+                        endTime: Time.now.utc)
 
                     createLog({
                         "type": "write",
@@ -355,6 +374,7 @@ module Api
                            status: 200
 
                 rescue => ex
+                    puts "Error: " + ex.to_s
                     render plain: "",
                            status: 500
                 end

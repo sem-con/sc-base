@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20181227220825) do
+ActiveRecord::Schema.define(version: 20190303002344) do
 
   create_table "data", force: :cascade do |t|
     t.text "item"
@@ -65,6 +65,15 @@ ActiveRecord::Schema.define(version: 20181227220825) do
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
+  create_table "provenances", force: :cascade do |t|
+    t.text "prov"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "input_hash"
+    t.datetime "startTime"
+    t.datetime "endTime"
+  end
+
   create_table "semantics", force: :cascade do |t|
     t.text "validation"
     t.datetime "created_at", null: false
@@ -76,6 +85,7 @@ ActiveRecord::Schema.define(version: 20181227220825) do
     t.text "item"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "prov_id"
   end
 
 end

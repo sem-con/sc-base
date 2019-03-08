@@ -1,13 +1,15 @@
 # == Schema Information
 #
-# Table name: stores
+# Table name: provenances
 #
 #  id         :integer          not null, primary key
-#  item       :text
+#  endTime    :datetime
+#  input_hash :string
+#  prov       :text
+#  startTime  :datetime
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
-#  prov_id    :integer
 #
 
-class Store < ApplicationRecord
+class Provenance < ApplicationRecord
 end
