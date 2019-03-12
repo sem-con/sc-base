@@ -6,7 +6,8 @@ module ProvenanceActivityHelper
 		# iterate over all items in provenance table
 		Provenance.all.each do |p|
 			prov += "scr:input_" + p.input_hash[0,12] + " a prov:Activity;\n"
-			prov += '    rdfs:label "' + p.input_hash + '"^^xsd:string;' + "\n"
+			prov += '    sc:inputHash "' + p.input_hash + '"^^xsd:string;' + "\n"
+			prov += '    rdfs:label "input data from ' + p.endTime.iso8601 + '"^^xsd:string;' + "\n"
 			if p.prov.to_s != ""
 			 	prov += "    prov:used " + p.prov[/scr:data_.{21}/] + ";\n" rescue ""
 			end

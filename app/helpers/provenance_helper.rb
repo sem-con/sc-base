@@ -61,7 +61,8 @@ module ProvenanceHelper
 
         # Entity
         prov += "scr:data_" + data_hash[0,12] + "_" + container_uid[0,8] + " a prov:Entity;\n"
-        prov += '    rdfs:label "' + data_hash + '"^^xsd:string;' + "\n"
+        prov += '    sc:dataHash "' + data_hash + '"^^xsd:string;' + "\n"
+        prov += '    rdfs:label "data set from ' + Time.now.utc.iso8601 + '"^^xsd:string;' + "\n"
         if container_uid != ""
             prov += "    prov:wasAttributedTo scr:container_" + container_uid[0,13] + ";\n"
         end
@@ -95,7 +96,7 @@ module ProvenanceHelper
             when "org"
                 prov += "scr:operator_" + operator_hash[0,12] + " a foaf:Organization, prov:Organization;\n"
             end
-            prov += '    rdfs:label "' + operator_hash + '"^^xsd:string;' + "\n"
+            prov += '    sc:operatorHash "' + operator_hash + '"^^xsd:string;' + "\n"
             prov += '    foaf:name "' + operator_name + '";' + "\n"
             prov += "    foaf:mbox <mailto:" + operator_email + ">;\n"
             prov += ".\n\n"

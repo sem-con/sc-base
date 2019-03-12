@@ -22,7 +22,7 @@ describe 'SEMCON PROVENANCE API' do
 				required: [ 'provision', 'validation' ]
 				run_test! do |response|
 					retVal = JSON.parse(response.body)
-					expect(retVal["provision"]["provenance"].split("\n").length).to eq(20)
+					expect(retVal["provision"]["provenance"].split("\n").length).to eq(21)
 				end
 			end
 		end
