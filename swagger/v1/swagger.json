@@ -248,16 +248,31 @@
     },
     "/api/data": {
       "get": {
-        "summary": "read data with default output structure",
+        "summary": "check provenance",
         "tags": [
-          "Data access"
+          "Container information"
         ],
         "produces": [
           "application/json"
         ],
         "responses": {
           "200": {
-            "description": "success"
+            "description": "success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "provision": {
+                  "type": "hash"
+                },
+                "validation": {
+                  "type": "hash"
+                }
+              },
+              "required": [
+                "provision",
+                "validation"
+              ]
+            }
           }
         }
       },
@@ -389,6 +404,47 @@
           },
           "404": {
             "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/buy": {
+      "post": {
+        "summary": "buy data",
+        "tags": [
+          "Billing"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "input",
+            "in": "body"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "500": {
+            "description": "invalid input"
+          }
+        }
+      }
+    },
+    "/api/paid": {
+      "get": {
+        "summary": "confirm payment",
+        "tags": [
+          "Billing"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
           }
         }
       }

@@ -78,10 +78,13 @@ module Api
             def plain # /api/data/plain
                 retVal_type = container_format
                 retVal_data = getData(params)
+                if retVal_data.nil?
+                    retVal_data = []
+                end
                 case retVal_type.to_s
                 when "JSON"
                     retVal = []
-                    retVal_data.each { |item| retVal << JSON(item) }
+                    retVal_data.each { |item| retVal << JSON(item) } rescue nil
                     render json: retVal, 
                            status: 200
                 else

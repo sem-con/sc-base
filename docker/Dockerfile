@@ -8,7 +8,7 @@ RUN mkdir -p $RAILS_ROOT/tmp/pids && \
 	apt-get update && \
 	apt-get install -y --no-install-recommends \
 		build-essential \
-		libsodium-dev=1.0.16-2~bpo9+1 && \
+		libsodium-dev=1.0.17-1~bpo9+1 && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY Gemfile $WORKDIR
