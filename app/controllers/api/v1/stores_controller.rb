@@ -3,6 +3,7 @@ module Api
         class StoresController < ApiController
             include ApplicationHelper
             include DataAccessHelper
+            include DataWriteHelper
             include ProvenanceHelper
 
             # respond only to JSON requests
@@ -19,6 +20,7 @@ module Api
                 case retVal_type.to_s
                 when "JSON"
                     retVal_data.each { |item| content << JSON(item) }
+                    content = content
                     content_hash = Digest::SHA256.hexdigest(content.to_json)
                 when "RDF"
                     retVal_data.each { |item| content << item.to_s }
@@ -42,8 +44,28 @@ module Api
             end
 
             def index # /api/data
-                provision = get_provision(params, "read")
-                provision_hash = Digest::SHA256.hexdigest(provision.to_json)
+                if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
+                    billing = {
+                        "payment-info": payment_info_text.to_s,
+                        "methods": ["Ether"],
+                        "provider": payment_seller_email.to_s,
+                        "provider-pubkey-id": payment_seller_pubkey_id.to_s
+                    }.stringify_keys
+
+                    billing_hash = Digest::SHA256.hexdigest(billing.to_json)
+                    param_str = request.query_string.to_s
+                    timeStart = Time.now.utc
+                    timeEnd = Time.now.utc
+
+                    provision = {
+                        "usage-policy": container_usage_policy.to_s,
+                        "provenance": getProvenance(billing_hash, param_str, timeStart, timeEnd)
+                    }.stringify_keys
+                    provision_hash = Digest::SHA256.hexdigest(billing.to_json + ", " + provision.to_json)
+                else
+                    provision = get_provision(params, "read")
+                    provision_hash = Digest::SHA256.hexdigest(provision.to_json)
+                end
                 begin
                     response = HTTParty.post("https://blockchain.ownyourdata.eu/api/doc?hash=" + provision_hash.to_s)
                 rescue => ex
@@ -63,45 +85,84 @@ module Api
                     end
                 end
 
-                retVal = {
-                    "provision": provision,
-                    "validation": {
-                        "hash": provision_hash,
-                        "dlt-reference": dlt_reference
-                    }
-                }.stringify_keys
+                if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
+                    retVal = {
+                        "billing": billing,
+                        "provision": provision,
+                        "validation": {
+                            "hash": provision_hash,
+                            "dlt-reference": dlt_reference
+                        }
+                    }.stringify_keys
+                else
+                    retVal = {
+                        "provision": provision,
+                        "validation": {
+                            "hash": provision_hash,
+                            "dlt-reference": dlt_reference
+                        }
+                    }.stringify_keys
+                end
 
                 render json: retVal.to_json, 
                        status: 200
             end
 
             def plain # /api/data/plain
-                retVal_type = container_format
-                retVal_data = getData(params)
-                if retVal_data.nil?
-                    retVal_data = []
-                end
-                case retVal_type.to_s
-                when "JSON"
-                    retVal = []
-                    retVal_data.each { |item| retVal << JSON(item) } rescue nil
-                    render json: retVal, 
-                           status: 200
+                if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
+                    billing = {
+                        "payment-info": payment_info_text.to_s,
+                        "methods": ["Ether"],
+                        "provider": payment_seller_email.to_s,
+                        "provider-pubkey-id": payment_seller_pubkey_id.to_s
+                    }.stringify_keys
+                    retVal = billing.to_json
                 else
-                    retVal = retVal_data.join("\n")
-                    render plain: retVal, 
-                           status: 200
-                end                    
-                createLog({
-                    "type": "read plain " + retVal_type.to_s,
-                    "scope": "all (" + retVal_data.count.to_s + " records)",
-                    "request": request.remote_ip.to_s}.to_json)
-
+                    retVal_type = container_format
+                    retVal_data = getData(params)
+                    if retVal_data.nil?
+                        retVal_data = []
+                    end
+                    case retVal_type.to_s
+                    when "JSON"
+                        retVal = []
+                        retVal_data.each { |item| retVal << JSON(item) } rescue nil
+                        retVal = retVal.to_json
+                    else
+                        retVal = retVal_data.join("\n")
+                    end                    
+                    createLog({
+                        "type": "read plain " + retVal_type.to_s,
+                        "scope": "all (" + retVal_data.count.to_s + " records)",
+                        "request": request.remote_ip.to_s}.to_json)
+                end
+                render plain: retVal, 
+                       status: 200
             end
 
             def full # /api/data/full
-                provision = get_provision(params, "read - full")
-                provision_hash = Digest::SHA256.hexdigest(provision.to_json)
+                if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
+                    billing = {
+                        "payment-info": payment_info_text.to_s,
+                        "methods": ["Ether"],
+                        "provider": payment_seller_email.to_s,
+                        "provider-pubkey-id": payment_seller_pubkey_id.to_s
+                    }.stringify_keys
+
+                    billing_hash = Digest::SHA256.hexdigest(billing.to_json)
+                    param_str = request.query_string.to_s
+                    timeStart = Time.now.utc
+                    timeEnd = Time.now.utc
+
+                    provision = {
+                        "usage-policy": container_usage_policy.to_s,
+                        "provenance": getProvenance(billing_hash, param_str, timeStart, timeEnd)
+                    }.stringify_keys
+                    provision_hash = Digest::SHA256.hexdigest(billing.to_json + ", " + provision.to_json)
+                else
+                    provision = get_provision(params, "read - full")
+                    provision_hash = Digest::SHA256.hexdigest(provision.to_json)
+                end
                 begin
                     response = HTTParty.post("https://blockchain.ownyourdata.eu/api/doc?hash=" + provision_hash.to_s)
                 rescue => ex
@@ -109,7 +170,6 @@ module Api
                 end
 
                 dlt_reference = ""
-                trusted_timestamp = ""
                 if !response.nil? && response.code.to_s == "200"
                     if response.parsed_response["address"] == ""
                         dlt_reference = "https://notary.ownyourdata.eu/en?hash=" + provision_hash.to_s
@@ -123,39 +183,76 @@ module Api
                     trusted_timestamp = response.parsed_response["tsr"]
                 end
 
-                retVal = {
-                    "provision": provision,
-                    "validation": {
-                        "hash": provision_hash,
-                        "trusted-timestamp": trusted_timestamp,
-                        "dlt-reference": dlt_reference
-                    }
-                }.stringify_keys
+                if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
+                    retVal = {
+                        "billing": billing,
+                        "provision": provision,
+                        "validation": {
+                            "hash": provision_hash,
+                            "trusted-timestamp": trusted_timestamp,
+                            "dlt-reference": dlt_reference
+                        }
+                    }.stringify_keys
+                else
+                    retVal = {
+                        "provision": provision,
+                        "validation": {
+                            "hash": provision_hash,
+                            "trusted-timestamp": trusted_timestamp,
+                            "dlt-reference": dlt_reference
+                        }
+                    }.stringify_keys
+                end
 
                 render json: retVal.to_json, 
-                       status: 200
+                       status: 200                       
             end
 
             def provision # /api/data/provision
-                retVal = get_provision(params, "read - provision only")
+                if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
+                    billing = {
+                        "payment-info": payment_info_text.to_s,
+                        "methods": ["Ether"],
+                        "provider": payment_seller_email.to_s,
+                        "provider-pubkey-id": payment_seller_pubkey_id.to_s
+                    }.stringify_keys
+
+                    billing_hash = Digest::SHA256.hexdigest(billing.to_json)
+                    param_str = request.query_string.to_s
+                    timeStart = Time.now.utc
+                    timeEnd = Time.now.utc
+
+                    provision = {
+                        "usage-policy": container_usage_policy.to_s,
+                        "provenance": getProvenance(billing_hash, param_str, timeStart, timeEnd)
+                    }.stringify_keys
+
+                    retVal = {"billing": billing, "provision": provision}.stringify_keys
+                else
+                    retVal = get_provision(params, "read - provision only")
+                end
 
                 render json: retVal.to_json, 
                        status: 200
-
             end
 
             def write
                 begin
                     if params.include?("_json")
                         input = JSON.parse(params.to_json)["_json"]
+                        other = JSON.parse(params.to_json).except("_json", "store", "format", "controller", "action", "application")
+                        if other != {}
+                            input += [other]
+                        end
                     else
-                        input = JSON.parse(params.to_json).except("store", "format", "controller", "action")
+                        input = JSON.parse(params.to_json).except("store", "format", "controller", "action", "application")
                     end
                 rescue => ex
                     render plain: "",
                            status: 422
                     return
                 end
+
                 # get input
 
                 # determine type of input
@@ -288,99 +385,57 @@ module Api
 
                     data_subject = up.dump(:trig).to_s
 
-                    uc = nil
-                    init = RDF::Repository.new()
-                    init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
-                    init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "UsagePolicy" ? uc = g : nil }
-                    if !uc.nil?
-                        data_controller = uc.dump(:trig).to_s
+                    if Semantic.count == 1
+                        uc = nil
+                        init = RDF::Repository.new()
+                        init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
+                        init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "UsagePolicy" ? uc = g : nil }
+                        if !uc.nil?
+                            data_controller = uc.dump(:trig).to_s
 
-                        intro  = "@prefix sc: <" + SEMCON_ONTOLOGY + "> .\n"
-                        intro += "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
-                        intro += "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n"
-                        intro += "@prefix spl: <https://www.specialprivacy.eu/langs/usage-policy#> .\n"
-                        intro += "@prefix svd: <http://www.specialprivacy.eu/vocabs/data#> .\n"
-                        intro += "@prefix xml: <http://www.w3.org/XML/1998/namespace> .\n"
-                        intro += "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
-                        intro += "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
+                            intro  = "@prefix sc: <" + SEMCON_ONTOLOGY + "> .\n"
+                            intro += "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n"
+                            intro += "@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n"
+                            intro += "@prefix spl: <http://www.specialprivacy.eu/langs/usage-policy#> .\n"
+                            intro += "@prefix svd: <http://www.specialprivacy.eu/vocabs/data#> .\n"
+                            intro += "@prefix xml: <http://www.w3.org/XML/1998/namespace> .\n"
+                            intro += "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
+                            intro += "@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n"
+                            intro += "@prefix svdu: <http://www.specialprivacy.eu/vocabs/duration#> .\n"
 
-                        dataSubject_intro = "sc:DataSubjectPolicy rdf:type owl:Class ;\n"
-                        data_subject = data_subject.strip.split("\n")[2..-1].join("\n")
+                            dataSubject_intro = "sc:DataSubjectPolicy rdf:type owl:Class ;\n"
+                            data_subject = data_subject.strip.split("\n")[1..-1].join("\n")
 
-                        dataController_intro = "sc:DataControllerPolicy rdf:type owl:Class ;\n"
-                        data_controller = data_controller.strip.split("\n")[3..-2].join("\n")
+                            dataController_intro = "sc:DataControllerPolicy rdf:type owl:Class ;\n"
+                            data_controller = data_controller.strip.split("\n")[2..-2].join("\n")
 
-                        usage_matching = {
-                            "usage-policy": intro + dataSubject_intro + data_subject + "\n" + dataController_intro + data_controller
-                        }.stringify_keys
+                            usage_matching = {
+                                "usage-policy": intro + dataSubject_intro + data_subject + "\n" + dataController_intro + data_controller
+                            }.stringify_keys
 
-                        # query service if policies match
-                        response = HTTParty.post(usage_matching_url, 
-                            headers: { 'Content-Type' => 'application/json' },
-                            body: usage_matching.to_json)
+                            # query service if policies match
+                            response = HTTParty.post(usage_matching_url, 
+                                headers: { 'Content-Type' => 'application/json' },
+                                body: usage_matching.to_json)
 
 # !!! enable as soon as usage policy matching works !!!
-                        # if response.code.to_s != "200"
-                        #     createLog({
-                        #         "type": "write",
-                        #         "scope": "invalid usage-policy",
-                        #         "request": request.remote_ip.to_s}.to_json)
+# puts "RESPONSE: " + response.code.to_s
+                            if response.code.to_s != "200"
+                                createLog({
+                                    "type": "write",
+                                    "scope": "invalid usage-policy",
+                                    "request": request.remote_ip.to_s}.to_json)
 
-                        #     render json: { "error": "provided usages policy not applicable for container" },
-                        #            status: 412
-                        #     return
-                        # end
+                                render json: { "error": "provided usages policy not applicable for container" },
+                                       status: 412
+                                return
+                            end
 # !!!
+                        end
                     end
                 end
+                writeData(content, input, provenance)
 
-                # write data to container store
-                new_items = []
-                begin
-                    if content.class == String
-                        if content == ""
-                            render plain: "",
-                                   status: 500
-                            return
-                        end
-                        content = [content]
-                    end
-
-                    # write provenance
-                    prov = Provenance.new(
-                        prov: provenance, 
-                        input_hash: Digest::SHA256.hexdigest(input.to_json),
-                        startTime: Time.now.utc)
-                    prov.save
-                    prov_id = prov.id
-
-                    # write data
-                    content.each do |item|
-                        case cf
-                        when "RDF", "CSV"
-                            my_store = Store.new(item: item, prov_id: prov_id)
-                        else
-                            my_store = Store.new(item: item.to_json, prov_id: prov_id)
-                        end
-                        my_store.save
-                        new_items << my_store.id
-                    end
-
-                    Provenance.find(prov_id).update_attributes(
-                        endTime: Time.now.utc)
-
-                    createLog({
-                        "type": "write",
-                        "scope": new_items.to_s,
-                        "request": request.remote_ip.to_s}.to_json)
-                    render plain: "",
-                           status: 200
-
-                rescue => ex
-                    puts "Error: " + ex.to_s
-                    render plain: "",
-                           status: 500
-                end
             end
         end
     end

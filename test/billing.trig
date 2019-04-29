@@ -25,25 +25,16 @@
 
   :ContainerConfigurationInstance rdf:type :ContainerConfiguration ;
     # generic - dublin core
-    dc:title "Step Count Container" ;
+    dc:title "Commercial Weather Data" ;
     dc:description """
-        This container contains information about step count
+        This container provides commercial weather data.
       """ ;
     dc:creator [
       rdf:type foaf:Person ;
       foaf:name "Christoph Fabianek" ;
       foaf:mbox <mailto:christoph.fabianek@gmail.com> ;
     ] ;
-    dc:contributor [
-      rdf:type foaf:Organization ;
-      foaf:name "OwnYourData" ;
-      foaf:mbox <mailto:christoph.fabianek@gmail.com> ;
-    ] , [
-      rdf:type foaf:Person ;
-      foaf:name "Fajar Ekaputra" ;
-      foaf:mbox <mailto:fajar@juang.id> ;
-    ] ;
-    :hasDataConfiguration :StepCountData .
+    :hasDataConfiguration :DataConfigurationInstance .
     # :hasDataLayer scr:LayerSemantic ;   # NON-EDITABLE - assigned
 
   :DataConfigurationInstance rdf:type :DataConfiguration ;  
@@ -52,22 +43,18 @@
     # :isDataMappingExist false ;     # NON-EDITABLE - assigned
     # :isUsagePolicyExist true ;      # NON-EDITABLE - assigned
     # data - classifications
-    :hasTag "Step Count", "Health", "Gyroscope" ;
+    :hasTag "weather" ;
+    :hasPaymentInfo """
+cost per record: 1 ETH
+prices are non-negotiable
+    """;
+    :hasSellerEmail "christoph.fabianek@gmail.com" ;
+    :hasSellerPubkeyID "D32F87617903542569E19BB992C8EB2354589D87" ;
     # data format - inspired from void
-    :hasNativeSyntax w3c-format:Turtle ;
+    :hasNativeSyntax <http://w3id.org/semcon/ns/ontology#CSV> ;
     # example data in plain string
     :hasExampleData """
-      @prefix step: <http://w3id.org/semcon/ns/stepcount#> .
-      @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-
-      [] rdf:type step:StepCount ;
-        step:date "2018-06-17" ;
-        step:value "2345" .
-
-      [] rdf:type step:StepCount ;
-        step:date "2018-06-18" ;
-        step:value "7502" .
-      """ .     
+    """ .     
 }
 
 #################################################################
@@ -111,47 +98,14 @@
 #    NAMED GRAPH ==> :DataModels
 #################################################################
 :DataModel {
-  # I have a single class, called StepCount
-  step:StepCount a owl:Class .
 
-  # each step count has a maximum of one date property of type xsd:date
-  step:date a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:domain step:StepCount ;
-    rdfs:range xsd:date .
-
-  # each step count has a maximum of one value property of type xsd:integer
-  step:value a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:domain step:StepCount ;
-    rdfs:range xsd:integer .
 }
 
 #################################################################
 #    NAMED GRAPH ==> :DataConstraints
 #################################################################
 :DataConstraint {
-  scr:StepCountShape a sh:NodeShape ;
-    sh:name "StepCount data constraints" ;
-    sh:targetClass: step:StepCount ;
-    sh:description "Example data constraints for StepCount data" ;
-    sh:closed true ;
-    sh:property [
-      sh:path step:date ;
-      sh:dataType xsd:dateTime ;
-      sh:maxCount 1 ;
-      sh:minCount 1 ;
-    ] ;
-    sh:property [
-      sh:path step:value ;
-      sh:dataType xsd:integer ;
-      sh:maxCount 1 ;
-      sh:minCount 1 ;
-      sh:minValue 0 ;
-    ] ;
-    sh:property [
-      sh:path rdf:type ;
-      sh:maxCount 1 ;
-      sh:minCount 1 ;
-    ] .
+
 }
 
 #################################################################

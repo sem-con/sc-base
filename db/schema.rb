@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190405140757) do
+ActiveRecord::Schema.define(version: 20190423141929) do
 
   create_table "async_processes", force: :cascade do |t|
     t.string "rid"
@@ -19,6 +19,29 @@ ActiveRecord::Schema.define(version: 20190405140757) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "file_hash"
+    t.integer "store_id"
+    t.text "file_list"
+    t.text "error_list"
+  end
+
+  create_table "billings", force: :cascade do |t|
+    t.string "uid"
+    t.string "buyer"
+    t.string "buyer_pubkey_id"
+    t.string "seller"
+    t.string "seller_pubkey_id"
+    t.text "request"
+    t.text "usage_policy"
+    t.string "payment_method"
+    t.text "buyer_signature"
+    t.text "seller_signature"
+    t.datetime "offer_timestamp"
+    t.float "offer_price"
+    t.string "payment_address"
+    t.datetime "payment_timestamp"
+    t.float "payment_price"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "data", force: :cascade do |t|

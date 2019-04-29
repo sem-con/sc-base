@@ -1,0 +1,14 @@
+docker run -p 4000:3000 -d --name billing -e AUTH=billing semcon/sc-base /bin/init.sh "$(< test/billing.trig)"
+export APP_KEY=`docker logs billing | grep APP_KEY | awk -F " " '{print $NF}'`; export APP_SECRET=`docker logs billing | grep APP_SECRET | awk -F " " '{print $NF}'`; export TOKEN=`curl -s -d grant_type=client_credentials -d client_id=$APP_KEY -d client_secret=$APP_SECRET -d scope=admin -X POST http://localhost:4000/oauth/token | jq -r '.access_token'`
+curl -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d "$(< spec/fixtures/files/test_valid.csv.json)" -X POST http://localhost:4000/api/data
+curl -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/data
+
+curl -s http://localhost:4000/api/data | jq
+
+create signature:
+gpg -b -o- <(printf '0d24c5e20875ccafffe50f9e3072e5393dd7421870faa0a9079dee1abe32effc') | base64
+
+verify signature:
+gpg --verify <(echo -n "iQIzBAABCgAdFiEE0y+HYXkDVCVp4Zu5ksjrI1RYnYcFAly6TGEACgkQksjrI1RYnYfStA/+LiRcjcAMPONfgvlKYQ95AEOBrQoWt+AX8dcEJv++rrL82GnrQODAbfqx/qC9Sv4tjl/7rNyHNKRsesI56M4dhkHoef0jXkPzIBut+0RoG8T6ihUcqPmzw60D6VKSMr78OK6h745FdsudZhdf7qG9YQ/obgnPcR1MAsrRmTdH0SBX9lYCBh3XnfGziJFWbYcId44AIl5IDSrm4Xgk5QuJrIy+zKzCy1cjiJ2lJj1i4bh2suhoEoVkhAxwXOBxq1j/TgnHVAGjbkyNIX7I0MXv9iSXPMCVYrQmxwUWFhUcUKrWJUqu6KsufCzwiXJN4oHdtY5BXRLM/xWPvXH1zO4zwdBUhSLv9XaHoyO0ktnIA487uxLPa/LUrPcyN7yB2K8GbCJ7iMjidc7ncVYTn08buzTXERyxYdY+7WHggqIlanCEo+hjH+h8xhsYkTVbiNpW8q5cDKJ0NJGCgUXaZxKW03YD4xbBt4MYBuln9N6Omo7mM3KnYVzKUEvYIiCRvnlWJetsh2ySPLZU2TiPOBn+f+igtjtJSQ/2cs1LUrfTSS9fumBPL+qigwCEyJ51/5L/MRk0KF9w9u9+8LC1xuTWuzMXZmb+2us40ggN/T45WJfChhS7JLmOE46VkQjiJGZ9ai3XS1Ls2hGqhG74lD3z/PxCwQPwL9t8I05bz4N5FeM=" | base64 -D) <(echo -n "0d24c5e20875ccafffe50f9e3072e5393dd7421870faa0a9079dee1abe32effc")
+
+curl -H "Content-Type: application/json" -d "$(< test/billing/billing_valid.json)" -X POST http://localhost:4000/api/buy

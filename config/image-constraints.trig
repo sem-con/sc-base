@@ -65,6 +65,18 @@ scr:DataConfigurationConstraints
                     ] ;
     sh:property     [ sh:maxCount  1 ;
                       sh:minCount  0 ;
+                      sh:path      :hasPaymentInfo
+                    ] ;
+    sh:property     [ sh:maxCount  1 ;
+                      sh:minCount  0 ;
+                      sh:path      :hasSellerEmail
+                    ] ;
+    sh:property     [ sh:maxCount  1 ;
+                      sh:minCount  0 ;
+                      sh:path      :hasSellerPubkeyID
+                    ] ;
+    sh:property     [ sh:maxCount  1 ;
+                      sh:minCount  0 ;
                       sh:path      :hasNativeSyntax
                     ] ;
     sh:property     [ sh:maxCount  1 ;
@@ -143,6 +155,15 @@ scr:DataConfigurationConstraints
     ###  http://xmlns.com/foaf/0.1/name
     foaf:name rdf:type owl:DatatypeProperty ;
               rdfs:domain foaf:Agent .
+    ###  http://w3id.org/semcon/ns/ontology#hasPaymentInfo
+    :hasPaymentInfo rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :DataConfiguration .
+    ###  http://w3id.org/semcon/ns/ontology#hasSellerEmail
+    :hasSellerEmail rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :DataConfiguration .
+    ###  http://w3id.org/semcon/ns/ontology#hasSellerPubkeyID
+    :hasSellerPubkeyID rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :DataConfiguration .
 
     #################################################################
     #    Classes

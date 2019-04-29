@@ -58,6 +58,45 @@ module ApplicationHelper
         end
     end
 
+    def payment_info_text
+        if Semantic.count > 0 and Semantic.first.validation.to_s != ""
+            # check data format in configuration
+            init = RDF::Repository.new()
+            init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
+            ic = nil
+            init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? ic = g : nil }
+            RDF::Query.execute(ic) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "hasPaymentInfo"), :value] }.first.value.to_s rescue nil
+        else
+            nil
+        end
+    end
+
+    def payment_seller_email
+        if Semantic.count > 0 and Semantic.first.validation.to_s != ""
+            # check data format in configuration
+            init = RDF::Repository.new()
+            init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
+            ic = nil
+            init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? ic = g : nil }
+            RDF::Query.execute(ic) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "hasSellerEmail"), :value] }.first.value.to_s rescue nil
+        else
+            nil
+        end
+    end
+
+    def payment_seller_pubkey_id
+        if Semantic.count > 0 and Semantic.first.validation.to_s != ""
+            # check data format in configuration
+            init = RDF::Repository.new()
+            init << RDF::Reader.for(:trig).new(Semantic.first.validation.to_s)
+            ic = nil
+            init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? ic = g : nil }
+            RDF::Query.execute(ic) { pattern [:subject, RDF::URI.new(SEMCON_ONTOLOGY + "hasSellerPubkeyID"), :value] }.first.value.to_s rescue nil
+        else
+            nil
+        end
+    end
+
     def suppress_output
       begin
         original_stderr = $stderr.clone

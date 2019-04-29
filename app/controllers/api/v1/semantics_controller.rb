@@ -109,7 +109,7 @@ module Api
                     if init_validation_url == ""
                         init_validation_url = SEMANTIC_SERVICE + "/validate/init"
                     end
-                    
+
                     response = HTTParty.post(init_validation_url, 
                         headers: { 'Content-Type' => 'application/json' },
                         body: init_validation.to_json)

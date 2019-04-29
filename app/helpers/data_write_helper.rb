@@ -1,8 +1,4 @@
-module DataAccessHelper
-    def getData(params)
-        Store.pluck(:item)
-    end
-
+module DataWriteHelper
     def writeData(content, input, provenance)
         # write data to container store
         new_items = []
