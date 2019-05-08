@@ -1,4 +1,10 @@
-docker run -p 4000:3000 -d --name billing -e AUTH=billing semcon/sc-base /bin/init.sh "$(< test/billing.trig)"
+# start billing service
+docker run -d --name srv-billing -p 4800:3000 -v $PWD/tmp:/key --env-file .env semcon/srv-billing
+
+# start container
+docker run -p 4000:3000 -d --name billing -e AUTH=billing -e BILLING_SERVICE=http://srv-billing:3000 --link srv-billing semcon/sc-base /bin/init.sh "$(< test/billing.trig)"
+
+# get credentials
 export APP_KEY=`docker logs billing | grep APP_KEY | awk -F " " '{print $NF}'`; export APP_SECRET=`docker logs billing | grep APP_SECRET | awk -F " " '{print $NF}'`; export TOKEN=`curl -s -d grant_type=client_credentials -d client_id=$APP_KEY -d client_secret=$APP_SECRET -d scope=admin -X POST http://localhost:4000/oauth/token | jq -r '.access_token'`
 curl -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d "$(< spec/fixtures/files/test_valid.csv.json)" -X POST http://localhost:4000/api/data
 curl -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/data

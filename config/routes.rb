@@ -27,6 +27,7 @@ Rails.application.routes.draw do
 			match 'log',            to: 'logs#index',             via: 'get'
 			match 'buy',            to: 'payments#buy',           via: 'post'
 			match 'paid',           to: 'payments#paid',          via: 'get'
+			match 'payments',       to: 'payments#index',         via: 'get'
 		end
 	end
 	match '/oauth/applications'     => 'application#create_application',  via: 'post'

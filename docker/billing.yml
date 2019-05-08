@@ -1,0 +1,17 @@
+base:
+  image: semcon/sc-base
+  command: ["/bin/init.sh", "$INIT_TRIG"] 
+  environment:
+    - AUTH=billing
+    - BILLING_SERVICE=billing
+  links: 
+    - billing
+  ports:
+    - "4000:3000"
+
+billing:
+  image: semcon/srv-billing
+  env_file:
+    - $PWD/tmp/billing.env
+  volumes:
+    - $PWD/tmp:/key

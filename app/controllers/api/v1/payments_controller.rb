@@ -1,51 +1,182 @@
 module Api
     module V1
         class PaymentsController < ApiController
+            require 'securerandom'
+            include ApplicationHelper
+            include DataAccessHelper
+            include ProvenanceHelper
+
             # respond only to JSON requests
             respond_to :json
             respond_to :html, only: []
             respond_to :xml, only: []
 
+            def index
+                render json: Billing.all,
+                       status: 200
+            end
+
             def buy
                 retVal = {}
-                buyer = params["buyer"]
+                buyer = params["buyer"].to_s
+                buyer_pubkey_id = params["buyer-pubkey-id"].to_s
+                request_str = params["request"].to_s
+                signature = params["signature"].to_s
+                usage_policy = params["usage-policy"].to_s
+                payment_method = params["method"].to_s
 
-                # parse input parameters ===
-                # puts "INPUT -------------------"
-                # puts "Buyer: " + buyer.to_s
-                # puts params.to_s
-                # puts "-------------------------"
+                # checks ===
+                # check valid payment method
+                if payment_method.downcase != "ether"
+                    render json: {"error": "unsupported payment method"}, 
+                           status: 412
+                    return
+                end
 
                 # verify signature ===
                 # call srv-billing: verify(doc, doc.sig, email, pubkey-id)
+                signature_verification_url = ENV["BILLING_SERVICE"].to_s + "/api/verify"
+                signature_verification_body = {
+                    "email": buyer,
+                    "pubkey-id": buyer_pubkey_id,
+                    "original": request_str,
+                    "signature": signature
+                }.stringify_keys
+                response = HTTParty.post(signature_verification_url, 
+                    headers: { 'Content-Type' => 'application/json' },
+                    body: signature_verification_body.to_json)
+
+                if response.code != 200
+                    render json: {"error": "signature verification failed"}, 
+                           status: response.code
+                    return
+                end
+                if response.parsed_response["valid"].to_s.downcase != "true"
+                    render json: {"error": "signature does not match request"}, 
+                           status: 412
+                    return
+                end
 
                 # get price ===
-                # call srv-billing: get_price(request, usage-policy, method)
+                get_price_url = ENV["BILLING_SERVICE"].to_s + "/api/price"
+                get_price_body = {
+                    "request": request_str,
+                    "usage-policy": usage_policy,
+                    "method": payment_method
+                }.stringify_keys
+                response = HTTParty.post(get_price_url, 
+                    headers: { 'Content-Type' => 'application/json' },
+                    body: get_price_body.to_json)
+                if response.code != 200
+                    render json: {"error": "retrieving price failed"}, 
+                           status: response.code
+                    return
+                end
+                price = response.parsed_response["price"].to_f rescue 0
 
                 # get payment infos ===
-                # call srv-billing: get_payment_info()
-                #   returns: Ethereum address, seller email, seller pubkey-id
-
-                # get signature ===
-                # call srv-billing: sign request string
+                payment_infos_url = ENV["BILLING_SERVICE"].to_s + "/api/payment_info"
+                payment_info = HTTParty.get(payment_infos_url)
+                if response.code != 200
+                    render json: {"error": "failed to collect payment infos"}, 
+                           status: response.code
+                    return
+                end
 
                 # write to model billing ===
+                bil = Billing.new(
+                    uid: SecureRandom.hex(20).to_s,
+                    buyer: buyer,
+                    buyer_pubkey_id: buyer_pubkey_id,
+                    buyer_signature: signature,
+                    offer_price: price,
+                    offer_timestamp: Time.now,
+                    payment_address: payment_info["address"].to_s,
+                    payment_method: payment_method,
+                    request: request_str,
+                    seller: payment_info["email"].to_s,
+                    seller_pubkey_id: payment_info["pubkey-id"].to_s,
+                    usage_policy: usage_policy)
+                if !bil.save
+                    render json: {"error": "saving payment request failed"}, 
+                           status: 500
+                    return
+                end
+
+                # create signature ===
+                # call srv-billing: sign request string
+                create_signature_url = ENV["BILLING_SERVICE"].to_s + "/api/sign"
+                create_signature_body = {
+                    "data": Base64.strict_encode64(bil.uid).to_s,
+                }.stringify_keys
+                response = HTTParty.post(create_signature_url, 
+                    headers: { 'Content-Type' => 'application/json' },
+                    body: create_signature_body.to_json)
+                if response.code != 200
+                    render json: {"error": "signing ID failed"}, 
+                           status: response.code
+                    return
+                end
+                seller_signature = response.parsed_response["signature"].to_s
+
+                # update billing record
+                if !bil.update_attributes(seller_signature: seller_signature)
+                    render json: {"error": "updating payment request failed"}, 
+                           status: 500
+                    return
+                end
 
                 # build response ===
-                bil = Billing.first
-                if !bil.nil?
-                    retVal = {
-                        "uid": bil.uid,
-                        "seller": bil.seller,
-                        "seller-pubkey-id": bil.seller_pubkey_id,
-                        "offer-timestamp": bil.offer_timestamp,
-                        "cost": bil.price,
-                        "payment-address": bil.payment_address,
-                        "signature": bil.seller_signature
-                    }.stringify_keys
-                else
-                    retVal = {}
+                billing = {
+                    "uid": bil.uid,
+                    "signature": bil.seller_signature,
+                    "provider": bil.seller,
+                    "provider-pubkey-id": bil.seller_pubkey_id,
+                    "offer-timestamp": bil.offer_timestamp,
+                    "payment-method": "Ether",
+                    "payment-address": bil.payment_address,
+                    "cost": bil.offer_price,
+                    "payment-info": payment_info_text.to_s
+                }.stringify_keys
+
+                billing_hash = Digest::SHA256.hexdigest(billing.to_json)
+                param_str = request.query_string.to_s
+                timeStart = Time.now.utc
+                timeEnd = Time.now.utc
+
+                provision = {
+                    "usage-policy": container_usage_policy.to_s,
+                    "provenance": getProvenance(billing_hash, param_str, timeStart, timeEnd)
+                }.stringify_keys
+                provision_hash = Digest::SHA256.hexdigest(billing.to_json + ", " + provision.to_json)
+
+                begin
+                    response = HTTParty.post("https://blockchain.ownyourdata.eu/api/doc?hash=" + provision_hash.to_s)
+                rescue => ex
+                    response = nil
                 end
+
+                dlt_reference = ""
+                if !response.nil? && response.code.to_s == "200"
+                    if response.parsed_response["address"] == ""
+                        dlt_reference = "https://notary.ownyourdata.eu/en?hash=" + provision_hash.to_s
+                    else
+                        dlt_reference = {
+                            "dlt": "Ethereum",
+                            "address": response.parsed_response["address"],
+                            "audit-proof": response.parsed_response["audit-proof"]
+                        }.stringify_keys
+                    end
+                end
+
+                retVal = {
+                    "billing": billing,
+                    "provision": provision,
+                    "validation": {
+                        "hash": provision_hash,
+                        "dlt-reference": dlt_reference
+                    }
+                }.stringify_keys
 
                 render json: retVal.to_json, 
                        status: 200
@@ -53,24 +184,86 @@ module Api
 
             def paid
                 # parse input parameters ===
-                # uid = params[:uid]
-                # tx = params[:tx]
+                tx = params[:tx].to_s
+                if tx[0..1] != "0x"
+                    tx = "0x" + tx
+                end
 
                 # check transaction ===
-                # get price via uid in billings
-                # call srv-billing check_tx(tx, price)
+                check_transaction_url = ENV["BILLING_SERVICE"].to_s + "/api/transaction?tx=" + tx
+                response = HTTParty.get(check_transaction_url)
+                if response.code != 200
+                    render json: {"error": "retrieving transaction failed"}, 
+                           status: response.code
+                    return
+                end
+                uid = response.parsed_response["input"].to_s
+                address = response.parsed_response["to"].to_s
+                price = response.parsed_response["value"].to_f
+
+                if uid[0..1] == "0x"
+                    uid = uid[2..-1]
+                end
+
+                # bil = Billing.first
+                bil = Billing.find_by_uid(uid)
+                if bil.nil?
+                    render json: {"error": "invalid transaction input"}, 
+                           status: 412
+                    return
+                end
+                
+                if address.downcase != bil.payment_address.to_s.downcase
+                    render json: {"error": "invalid payment address"}, 
+                           status: 412
+                    return
+                end
+
+                if price < bil.offer_price
+                    render json: {"error": "not enough funds"}, 
+                           status: 412
+                    return
+                end
 
                 # update billing record ===
+                bil.update_attributes(
+                    buyer_address: response.parsed_response["from"].to_s,
+                    payment_price: price,
+                    payment_timestamp: Time.now)
 
                 # create OAuth credentials ===
-                # scope: read & request string
+                oauth = Doorkeeper::Application.new( 
+                    name: bil.uid, 
+                    redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
+                    scopes: 'read')
+                if !oauth.save
+                    render json: {"error": "creating oauth credentials failed"}, 
+                           status: 412
+                    return
+                end
 
-                # sign secret with pubkey ===
-                # call srv-billing encrypt(pubkey-id, secret)
+                # encrypt secret with pubkey ===
+                encrypt_url = ENV["BILLING_SERVICE"].to_s + "/api/encrypt"
+                encrypt_body = {
+                    "email": bil.buyer.to_s,
+                    "pubkey-id": bil.buyer_pubkey_id.to_s,
+                    "message": Base64.strict_encode64(oauth.secret.to_s)
+                }.stringify_keys
+                response = HTTParty.post(encrypt_url, 
+                    headers: { 'Content-Type' => 'application/json' },
+                    body: encrypt_body.to_json)
+                if response.code != 200
+                    puts "enc?"
+                    render json: {"error": "encrypting oauth secret failed"}, 
+                           status: response.code
+                    return
+                end
+                oauth_secret = response.parsed_response["cipher"]
 
                 retVal = {
-                    "key": "app_key",
-                    "secret": "app_secret"
+                    "key": oauth.uid.to_s,
+                    # "secret": oauth.secret.to_s
+                    "secret": oauth_secret.to_s
                 }.stringify_keys
 
                 render json: retVal.to_json, 

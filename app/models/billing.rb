@@ -4,6 +4,7 @@
 #
 #  id                :integer          not null, primary key
 #  buyer             :string
+#  buyer_address     :string
 #  buyer_signature   :text
 #  offer_price       :float
 #  offer_timestamp   :datetime

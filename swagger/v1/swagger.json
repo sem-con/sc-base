@@ -426,16 +426,37 @@
         "responses": {
           "200": {
             "description": "success"
-          },
-          "500": {
-            "description": "invalid input"
           }
         }
       }
     },
-    "/api/paid": {
+    "/api/paid?tx={transaction_hash}": {
+      "parameters": [
+        {
+          "name": "transaction_hash",
+          "in": "path",
+          "type": "string",
+          "required": true
+        }
+      ],
       "get": {
         "summary": "confirm payment",
+        "tags": [
+          "Billing"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          }
+        }
+      }
+    },
+    "/api/payments": {
+      "get": {
+        "summary": "list all payments",
         "tags": [
           "Billing"
         ],
