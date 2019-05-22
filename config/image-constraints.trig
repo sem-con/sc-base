@@ -77,6 +77,14 @@ scr:DataConfigurationConstraints
                     ] ;
     sh:property     [ sh:maxCount  1 ;
                       sh:minCount  0 ;
+                      sh:path      :hasDataLocation
+                    ] ;
+    sh:property     [ sh:maxCount  1 ;
+                      sh:minCount  0 ;
+                      sh:path      :hasDataLocationDescription
+                    ] ;
+    sh:property     [ sh:maxCount  1 ;
+                      sh:minCount  0 ;
                       sh:path      :hasNativeSyntax
                     ] ;
     sh:property     [ sh:maxCount  1 ;
@@ -96,6 +104,8 @@ scr:DataConfigurationConstraints
         :usagePolicyValidationService "https://semantic.ownyourdata.eu/api/validate/usage-policy" ;
         # usage policy service
         :initValidationService "https://semantic.ownyourdata.eu/api/validate/init" ;
+        # billing service
+        :billingService "http://srv-billing:3000" ;
     .
 }
 
@@ -155,6 +165,12 @@ scr:DataConfigurationConstraints
     ###  http://xmlns.com/foaf/0.1/name
     foaf:name rdf:type owl:DatatypeProperty ;
               rdfs:domain foaf:Agent .
+    ###  http://w3id.org/semcon/ns/ontology#hasDataLocation
+    :hasDataLocation rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :DataConfiguration .
+    ###  http://w3id.org/semcon/ns/ontology#hasDataLocationDescription
+    :hasDataLocationDescription rdf:type owl:DatatypeProperty ;
+                 rdfs:domain :DataConfiguration .
     ###  http://w3id.org/semcon/ns/ontology#hasPaymentInfo
     :hasPaymentInfo rdf:type owl:DatatypeProperty ;
                  rdfs:domain :DataConfiguration .

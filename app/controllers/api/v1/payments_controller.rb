@@ -11,7 +11,7 @@ module Api
             respond_to :html, only: []
             respond_to :xml, only: []
 
-            def index
+            def payments
                 render json: Billing.all,
                        status: 200
             end
@@ -20,10 +20,11 @@ module Api
                 retVal = {}
                 buyer = params["buyer"].to_s
                 buyer_pubkey_id = params["buyer-pubkey-id"].to_s
+                buyer_info = params["buyer-info"].to_s
                 request_str = params["request"].to_s
                 signature = params["signature"].to_s
                 usage_policy = params["usage-policy"].to_s
-                payment_method = params["method"].to_s
+                payment_method = params["payment-method"].to_s
 
                 # checks ===
                 # check valid payment method
@@ -35,20 +36,28 @@ module Api
 
                 # verify signature ===
                 # call srv-billing: verify(doc, doc.sig, email, pubkey-id)
-                signature_verification_url = ENV["BILLING_SERVICE"].to_s + "/api/verify"
+                billing_service_url = payment_billing_service_url
+                signature_verification_url = billing_service_url + "/api/verify"
                 signature_verification_body = {
                     "email": buyer,
                     "pubkey-id": buyer_pubkey_id,
                     "original": request_str,
                     "signature": signature
                 }.stringify_keys
-                response = HTTParty.post(signature_verification_url, 
-                    headers: { 'Content-Type' => 'application/json' },
-                    body: signature_verification_body.to_json)
+                timeout = false
+                begin
+                    response = HTTParty.post(signature_verification_url, 
+                        timeout: 15,
+                        headers: { 'Content-Type' => 'application/json' },
+                        body: signature_verification_body.to_json)
+                rescue
+                    timeout = true
+                end
 
-                if response.code != 200
+                if timeout or response.nil? or response.code != 200
+                    response_code = response.code rescue 500
                     render json: {"error": "signature verification failed"}, 
-                           status: response.code
+                           status: response_code
                     return
                 end
                 if response.parsed_response["valid"].to_s.downcase != "true"
@@ -58,7 +67,7 @@ module Api
                 end
 
                 # get price ===
-                get_price_url = ENV["BILLING_SERVICE"].to_s + "/api/price"
+                get_price_url = billing_service_url + "/api/payment_terms"
                 get_price_body = {
                     "request": request_str,
                     "usage-policy": usage_policy,
@@ -72,27 +81,40 @@ module Api
                            status: response.code
                     return
                 end
+
+                if response.parsed_response["valid"].to_s.downcase != "true"
+                    render json: {"error": response.parsed_response["offer-info"].to_s}, 
+                           status: 412
+                    return
+                end
                 price = response.parsed_response["price"].to_f rescue 0
+                offer_info = response.parsed_response["offer-info"].to_s rescue ""
+                offer_end = Time.at(response.parsed_response["offer-end"].to_i).to_datetime rescue Time.now+30.days
 
                 # get payment infos ===
-                payment_infos_url = ENV["BILLING_SERVICE"].to_s + "/api/payment_info"
+                payment_infos_url = billing_service_url + "/api/payment_info"
                 payment_info = HTTParty.get(payment_infos_url)
                 if response.code != 200
                     render json: {"error": "failed to collect payment infos"}, 
                            status: response.code
                     return
                 end
+                address_path = payment_info["path"].to_s rescue ""
 
                 # write to model billing ===
                 bil = Billing.new(
                     uid: SecureRandom.hex(20).to_s,
                     buyer: buyer,
                     buyer_pubkey_id: buyer_pubkey_id,
+                    buyer_info: buyer_info,
                     buyer_signature: signature,
                     offer_price: price,
                     offer_timestamp: Time.now,
+                    offer_info: offer_info,
+                    valid_until: offer_end,
                     payment_address: payment_info["address"].to_s,
                     payment_method: payment_method,
+                    address_path: address_path,
                     request: request_str,
                     seller: payment_info["email"].to_s,
                     seller_pubkey_id: payment_info["pubkey-id"].to_s,
@@ -105,7 +127,7 @@ module Api
 
                 # create signature ===
                 # call srv-billing: sign request string
-                create_signature_url = ENV["BILLING_SERVICE"].to_s + "/api/sign"
+                create_signature_url = billing_service_url + "/api/sign"
                 create_signature_body = {
                     "data": Base64.strict_encode64(bil.uid).to_s,
                 }.stringify_keys
@@ -133,6 +155,7 @@ module Api
                     "provider": bil.seller,
                     "provider-pubkey-id": bil.seller_pubkey_id,
                     "offer-timestamp": bil.offer_timestamp,
+                    "offer-info": bil.offer_info,
                     "payment-method": "Ether",
                     "payment-address": bil.payment_address,
                     "cost": bil.offer_price,
@@ -183,6 +206,8 @@ module Api
             end
 
             def paid
+                billing_service_url = payment_billing_service_url
+
                 # parse input parameters ===
                 tx = params[:tx].to_s
                 if tx[0..1] != "0x"
@@ -190,7 +215,7 @@ module Api
                 end
 
                 # check transaction ===
-                check_transaction_url = ENV["BILLING_SERVICE"].to_s + "/api/transaction?tx=" + tx
+                check_transaction_url = billing_service_url + "/api/transaction?tx=" + tx
                 response = HTTParty.get(check_transaction_url)
                 if response.code != 200
                     render json: {"error": "retrieving transaction failed"}, 
@@ -200,6 +225,7 @@ module Api
                 uid = response.parsed_response["input"].to_s
                 address = response.parsed_response["to"].to_s
                 price = response.parsed_response["value"].to_f
+                ts = response.parsed_response["timestamp"].to_i rescue 0
 
                 if uid[0..1] == "0x"
                     uid = uid[2..-1]
@@ -225,11 +251,22 @@ module Api
                     return
                 end
 
+                if ts > bil.valid_until.to_i
+                    bil.update_attributes(
+                        transaction_hash: tx,
+                        transaction_timestamp: Time.at(ts))
+                    render json: {"error": "offer expired"}, 
+                           status: 412
+                    return
+                end
+
                 # update billing record ===
                 bil.update_attributes(
                     buyer_address: response.parsed_response["from"].to_s,
                     payment_price: price,
-                    payment_timestamp: Time.now)
+                    payment_timestamp: Time.now, 
+                    transaction_hash: tx,
+                    transaction_timestamp: Time.at(ts))
 
                 # create OAuth credentials ===
                 oauth = Doorkeeper::Application.new( 
@@ -243,7 +280,7 @@ module Api
                 end
 
                 # encrypt secret with pubkey ===
-                encrypt_url = ENV["BILLING_SERVICE"].to_s + "/api/encrypt"
+                encrypt_url = billing_service_url + "/api/encrypt"
                 encrypt_body = {
                     "email": bil.buyer.to_s,
                     "pubkey-id": bil.buyer_pubkey_id.to_s,
@@ -253,7 +290,6 @@ module Api
                     headers: { 'Content-Type' => 'application/json' },
                     body: encrypt_body.to_json)
                 if response.code != 200
-                    puts "enc?"
                     render json: {"error": "encrypting oauth secret failed"}, 
                            status: response.code
                     return

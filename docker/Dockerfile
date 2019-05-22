@@ -7,8 +7,9 @@ RUN mkdir -p $RAILS_ROOT/tmp/pids && \
 	echo "deb http://deb.debian.org/debian stretch-backports main" >> /etc/apt/sources.list && \
 	apt-get update && \
 	apt-get install -y --no-install-recommends \
-		build-essential \
-		libsodium-dev=1.0.17-1~bpo9+1 && \
+ 		libsodium-dev=1.0.17-1~bpo9+1 \
+#  		libsodium-dev \
+		build-essential && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY Gemfile $WORKDIR
@@ -21,6 +22,7 @@ RUN gem update --system && \
 COPY . .
 
 RUN bundle update && \
+	rake db:migrate && \
 	ln -s $PWD/script/init.sh /bin/init.sh
 
 CMD ["./script/run.sh"]

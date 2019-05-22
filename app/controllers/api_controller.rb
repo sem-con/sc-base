@@ -7,6 +7,8 @@ class ApiController < ApplicationController
 		if !(ENV["AUTH"].to_s == "" || ENV["AUTH"].to_s.downcase == "false")
 			if ENV["AUTH"].to_s.downcase == "billing" && (controller_name == "stores" || controller_name == "payments")
 				case action_name
+				when "payments"
+					doorkeeper_authorize! :admin
 				when "buy", "paid"
 					puts "===SPECIAL HANDLING FOR COMMERCIAL DATA==="
 				when "index", "plain", "full", "provision"

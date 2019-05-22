@@ -18,3 +18,47 @@ verify signature:
 gpg --verify <(echo -n "iQIzBAABCgAdFiEE0y+HYXkDVCVp4Zu5ksjrI1RYnYcFAly6TGEACgkQksjrI1RYnYfStA/+LiRcjcAMPONfgvlKYQ95AEOBrQoWt+AX8dcEJv++rrL82GnrQODAbfqx/qC9Sv4tjl/7rNyHNKRsesI56M4dhkHoef0jXkPzIBut+0RoG8T6ihUcqPmzw60D6VKSMr78OK6h745FdsudZhdf7qG9YQ/obgnPcR1MAsrRmTdH0SBX9lYCBh3XnfGziJFWbYcId44AIl5IDSrm4Xgk5QuJrIy+zKzCy1cjiJ2lJj1i4bh2suhoEoVkhAxwXOBxq1j/TgnHVAGjbkyNIX7I0MXv9iSXPMCVYrQmxwUWFhUcUKrWJUqu6KsufCzwiXJN4oHdtY5BXRLM/xWPvXH1zO4zwdBUhSLv9XaHoyO0ktnIA487uxLPa/LUrPcyN7yB2K8GbCJ7iMjidc7ncVYTn08buzTXERyxYdY+7WHggqIlanCEo+hjH+h8xhsYkTVbiNpW8q5cDKJ0NJGCgUXaZxKW03YD4xbBt4MYBuln9N6Omo7mM3KnYVzKUEvYIiCRvnlWJetsh2ySPLZU2TiPOBn+f+igtjtJSQ/2cs1LUrfTSS9fumBPL+qigwCEyJ51/5L/MRk0KF9w9u9+8LC1xuTWuzMXZmb+2us40ggN/T45WJfChhS7JLmOE46VkQjiJGZ9ai3XS1Ls2hGqhG74lD3z/PxCwQPwL9t8I05bz4N5FeM=" | base64 -D) <(echo -n "0d24c5e20875ccafffe50f9e3072e5393dd7421870faa0a9079dee1abe32effc")
 
 curl -H "Content-Type: application/json" -d "$(< test/billing/billing_valid.json)" -X POST http://localhost:4000/api/buy
+
+
+Billing.last.update_attributes(uid: "46b1e6d31fdf2faa65f0cef6de9c4d9868f039d6", payment_address: "0xe7a3a048d9851977a9a7deda5b05e8b8708325f1")
+
+CREDENTIALS=`curl -s "http://localhost:4000/api/paid?tx=0x06bf30b730ead19766d55c0cd3fe6a37a932861eb7fa6d0eaa9c430b9866c876"`
+
+
+
+curl -s https://vownyourdata.zamg.ac.at:9600/api/data | jq
+
+curl -s -H "Content-Type: application/json" \
+    -d "$(< test/billing/billing_valid.json)" \
+    -X POST https://vownyourdata.zamg.ac.at:9600/api/buy | jq
+
+
+CREDENTIALS=`curl -s "https://vownyourdata.zamg.ac.at:9600/api/paid?tx=0x06bf30b730ead19766d55c0cd3fe6a37a932861eb7fa6d0eaa9c430b9866c876"`
+
+MY_KEY=`echo $CREDENTIALS | jq -r '.key'`; \
+MY_SECRET=`echo $CREDENTIALS | jq -r '.secret' | \
+    base64 -D | gpg --decrypt`;
+MY_TOKEN=`curl -s -d grant_type=client_credentials \
+      -d client_id=$MY_KEY \
+      -d client_secret=$MY_SECRET \
+      -d scope=read \
+      -X POST https://vownyourdata.zamg.ac.at:9600/oauth/token | \
+    jq -r '.access_token'`
+curl -s -H "Authorization: Bearer $MY_TOKEN" \
+    "https://vownyourdata.zamg.ac.at:9600/api/data?id=11022,11389" | jq
+
+APP_KEY=`docker logs tawes | \
+    grep APP_KEY | awk -F " " '{print $NF}'`; \
+  APP_SECRET=`docker logs tawes | \
+    grep APP_SECRET | awk -F " " '{print $NF}'`; \
+  TOKEN=`curl -s -d grant_type=client_credentials \
+      -d client_id=$APP_KEY \
+      -d client_secret=$APP_SECRET \
+      -d scope=admin \
+      -X POST https://vownyourdata.zamg.ac.at:9600/oauth/token | \
+    jq -r '.access_token'`
+
+curl -s -H "Authorization: Bearer $TOKEN" \
+    https://vownyourdata.zamg.ac.at:9600/api/payments | jq
+
+

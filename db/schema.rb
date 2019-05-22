@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190502202923) do
+ActiveRecord::Schema.define(version: 20190521215649) do
 
   create_table "async_processes", force: :cascade do |t|
     t.string "rid"
@@ -43,6 +43,12 @@ ActiveRecord::Schema.define(version: 20190502202923) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "buyer_address"
+    t.text "offer_info"
+    t.text "buyer_info"
+    t.string "transaction_hash"
+    t.string "transaction_timestamp"
+    t.datetime "valid_until"
+    t.string "address_path"
   end
 
   create_table "delayed_jobs", force: :cascade do |t|

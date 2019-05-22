@@ -26,6 +26,7 @@ module ProvenanceHelper
         operator_type = ""
         operator_name = query.execute(uc).first.name.to_s rescue ""
         operator_email = query.execute(uc).first.email.to_s.sub("mailto:","") rescue ""
+        operator_hash = ""
 
         if operator_name == ""
             query = RDF::Query.new({
