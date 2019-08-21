@@ -25,9 +25,8 @@
 
   :ContainerConfigurationInstance rdf:type :ContainerConfiguration ;
     # generic - dublin core
-    dc:title "Step Count Container" ;
+    dc:title "Sample Container" ;
     dc:description """
-        This container contains information about step count
       """ ;
     dc:creator [
       rdf:type foaf:Person ;

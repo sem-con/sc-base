@@ -372,7 +372,7 @@ module Api
                             intro += "@prefix svdu: <http://www.specialprivacy.eu/vocabs/duration#> .\n"
 
                             dataSubject_intro = "sc:DataSubjectPolicy rdf:type owl:Class ;\n"
-                            data_subject = data_subject.strip.split("\n")[1..-1].join("\n")
+                            data_subject = data_subject.strip.split("\n")[2..-2].join("\n")
 
                             dataController_intro = "sc:DataControllerPolicy rdf:type owl:Class ;\n"
                             data_controller = data_controller.strip.split("\n")[2..-2].join("\n")
@@ -392,7 +392,7 @@ module Api
                                     "scope": "invalid usage-policy",
                                     "request": request.remote_ip.to_s}.to_json)
 
-                                render json: { "error": "provided usages policy not applicable for container" },
+                                render json: { "error": "provided usage policy not applicable for container" },
                                        status: 412
                                 return
                             end

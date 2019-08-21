@@ -12,7 +12,6 @@ module DataAccessHelper
         case retVal_type.to_s
         when "JSON"
             retVal_data.each { |item| content << JSON(item) }
-            content = content
             content_hash = Digest::SHA256.hexdigest(content.to_json)
         when "RDF"
             retVal_data.each { |item| content << item.to_s }
