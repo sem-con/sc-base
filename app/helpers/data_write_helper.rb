@@ -21,15 +21,17 @@ module DataWriteHelper
             prov_id = prov.id
 
             # write data
-            content.each do |item|
-                case container_format
-                when "RDF", "CSV"
-                    my_store = Store.new(item: item, prov_id: prov_id)
-                else
-                    my_store = Store.new(item: item.to_json, prov_id: prov_id)
+            Store.transaction do
+                content.each do |item|
+                    case container_format
+                    when "RDF", "CSV"
+                        my_store = Store.new(item: item, prov_id: prov_id)
+                    else
+                        my_store = Store.new(item: item.to_json, prov_id: prov_id)
+                    end
+                    my_store.save
+                    new_items << my_store.id
                 end
-                my_store.save
-                new_items << my_store.id
             end
 
             Provenance.find(prov_id).update_attributes(
