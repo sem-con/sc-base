@@ -156,7 +156,7 @@ GEM
     nokogumbo (1.5.0)
       nokogiri
     public_suffix (4.0.1)
-    puma (3.12.1)
+    puma (3.12.2)
     rack (2.0.7)
     rack-cors (1.0.3)
     rack-test (1.1.0)
@@ -338,7 +338,7 @@ DEPENDENCIES
   listen (>= 3.0.5, < 3.2)
   loofah (~> 2.3, >= 2.3.1)
   merkle-hash-tree
-  puma (~> 3.7)
+  puma (~> 3.12)
   rack-cors
   rails (~> 5.1.6)
   rbnacl
