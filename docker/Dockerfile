@@ -22,7 +22,6 @@ RUN gem update --system && \
 COPY . .
 
 RUN bundle update && \
-	rake db:migrate && \
 	ln -s $PWD/script/init.sh /bin/init.sh
 
 CMD ["./script/run.sh"]

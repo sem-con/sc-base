@@ -155,6 +155,7 @@ GEM
       mini_portile2 (~> 2.4.0)
     nokogumbo (2.0.2)
       nokogiri (~> 1.8, >= 1.8.4)
+    pg (1.1.4)
     public_suffix (4.0.1)
     puma (4.3.1)
       nio4r (~> 2.0)
@@ -339,6 +340,7 @@ DEPENDENCIES
   linkeddata
   listen (>= 3.0.5, < 3.2)
   merkle-hash-tree
+  pg (>= 0.18, < 2.0)
   puma (>= 3.12.2)
   rack-cors (>= 1.0.4)
   rails (~> 5.1.6)

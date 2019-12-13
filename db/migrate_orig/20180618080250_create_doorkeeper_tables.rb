@@ -17,8 +17,8 @@ class CreateDoorkeeperTables < ActiveRecord::Migration[5.1]
       t.string   :token,             null: false
       t.integer  :expires_in,        null: false
       t.text     :redirect_uri,      null: false
-      t.timestamp :created_at,        null: false
-      t.timestamp :revoked_at
+      t.datetime :created_at,        null: false
+      t.datetime :revoked_at
       t.string   :scopes
     end
 
@@ -43,8 +43,8 @@ class CreateDoorkeeperTables < ActiveRecord::Migration[5.1]
 
       t.string   :refresh_token
       t.integer  :expires_in
-      t.timestamp :revoked_at
-      t.timestamp :created_at,             null: false
+      t.datetime :revoked_at
+      t.datetime :created_at,             null: false
       t.string   :scopes
 
       # If there is a previous_refresh_token column,

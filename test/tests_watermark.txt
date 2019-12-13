@@ -1,0 +1,37 @@
+docker rm -f docker_semcon_1
+docker run --name docker_semcon_1 -p 4000:3000 -d -e WATERMARK=true semcon/sc-base /bin/init.sh "$(< test/wm.trig)"
+docker logs -f docker_semcon_1
+
+curl http://localhost:4000/api/active
+
+# get credentials
+export APP_KEY=`docker logs docker_semcon_1 | grep APP_KEY | awk -F " " '{print $NF}'`; export APP_SECRET=`docker logs docker_semcon_1 | grep APP_SECRET | awk -F " " '{print $NF}'`; export TOKEN=`curl -s -d grant_type=client_credentials -d client_id=$APP_KEY -d client_secret=$APP_SECRET -d scope=admin -X POST http://localhost:4000/oauth/token | jq -r '.access_token'`
+
+# read data
+curl -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/data/plain
+
+# create read scope
+curl -H "Authorization: Bearer $TOKEN" -d name=app2 -d scopes=read -X POST http://localhost:4000/oauth/applications
+export TOKEN2=`curl -s -d grant_type=client_credentials -d client_id= -d client_secret= -d scope=read -X POST http://localhost:4000/oauth/token | jq -r '.access_token'`
+
+# write data
+cat ~/semcon/projects/MyPCH/data/sc_tidepool1.json | curl -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d @- -X POST http://localhost:4000/api/data
+
+# get single fragment
+curl -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/watermark/fragment/2019-04-07
+curl -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/watermark/error/8/3
+
+# identify
+curl -H "Authorization: Bearer $TOKEN" -d "$(<~/semcon/projects/MyPCH/data/user2_190407.json)" -X POST http://localhost:4000/api/watermark/identify
+
+
+Notes===
+
+# pre-process data in Ruby
+require "json"
+file = File.open "tidepool1.json"
+data = JSON.load file
+file.close
+
+# pre-process data with jq
+cat tidepool1.json | jq '.[] | select(.value | length >= 1) | {deviceId: .deviceId, type: type, units: .units, time: .time, id: .id, value: .value}' > sc_tidepool1.json

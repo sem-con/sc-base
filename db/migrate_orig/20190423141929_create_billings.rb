@@ -11,10 +11,10 @@ class CreateBillings < ActiveRecord::Migration[5.1]
       t.string :payment_method
       t.text :buyer_signature
       t.text :seller_signature
-      t.timestamp :offer_timestamp
+      t.datetime :offer_timestamp
       t.float :offer_price
       t.string :payment_address
-      t.timestamp :payment_timestamp
+      t.datetime :payment_timestamp
       t.float :payment_price
 
       t.timestamps

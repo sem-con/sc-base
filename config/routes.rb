@@ -28,6 +28,28 @@ Rails.application.routes.draw do
 			match 'buy',            to: 'payments#buy',           via: 'post'
 			match 'paid',           to: 'payments#paid',          via: 'get'
 			match 'payments',       to: 'payments#payments',      via: 'get'
+
+			#watermarking
+			match 'data/fragment/:fragment_id', 
+									to: 'watermarks#user_fragment',       via: 'get'
+			match 'watermark/user/:user_id',
+									to: 'watermarks#user_data',           via: 'get'
+			match 'watermark/user/:user_id/fragment/:fragment_id',
+									to: 'watermarks#user_fragment_data',  via: 'get'
+			match 'watermark/user/:user_id/fragment/:fragment_id/error',
+									to: 'watermarks#user_fragment_error', via: 'get'
+			match 'watermark/user/:user_id/fragment/:fragment_id/kpi/:kpi',
+									to: 'watermarks#user_fragment_kpi',   via: 'get'
+			match 'watermark/error/:key(/:len)',
+									to: 'watermarks#key',                 via: 'get'
+			match 'watermark/fragments',     
+									to: 'watermarks#fragments_list',      via: 'get'
+			match 'watermark/fragment/:fragment_id',     
+									to: 'watermarks#raw_data',            via: 'get'
+			match 'watermark/identify', 
+									to: 'watermarks#identify',            via: 'post'
+			match 'watermark/user/:user_id/fragment/:fragment_id',
+									to: 'watermarks#compare',             via: 'post'
 		end
 	end
 	match '/oauth/applications'     => 'application#create_application',  via: 'post'

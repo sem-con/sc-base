@@ -27,6 +27,11 @@ class ApplicationController < ActionController::API
         { json: { error: "Not authorized" } }
     end
 
+    def doorkeeper_forbidden_render_options(*)
+        { json: { error: "Not authorized" } }
+    end
+
+
     def revoke_token
         token = Doorkeeper::AccessToken.find_by_token(params[:token].to_s)
         if token.nil?
