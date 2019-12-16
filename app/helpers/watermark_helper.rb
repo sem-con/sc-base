@@ -55,7 +55,7 @@ module WatermarkHelper
 
     def apply_watermark(data, key)
         retVal = []
-        ev = error_vector(key, data.length)
+        ev = error_vector(key, data)
         i = 0
         data.each do |item|
             new_item = item.stringify_keys
@@ -66,17 +66,18 @@ module WatermarkHelper
         return retVal
     end
 
-    def error_scale(error_vector)
+    def error_scale(error_vector, data)
         range = 0.4
         max = 0.2
         return (Vector.elements(error_vector)*range).collect { |i| i - (range-max) }.to_a
     end
 
-    def error_vector(seed, error_length)
+    def error_vector(seed, data)
+        error_length = data.length
         srand(seed.to_i)
         retVal = []
         error_length.times{ retVal << rand }
-        return error_scale(retVal)
+        return error_scale(retVal, data)
     end
 
     def valid_user?(user_id)
@@ -92,11 +93,18 @@ module WatermarkHelper
         Date.parse(fragment).present? rescue false
     end
 
+    def basic_distance(x, y)
+        (x-y)**2
+    end
+
     def distance(x, y)
         require 'enumerable/standard_deviation'
         
         subset = 0..([x.length, y.length].min - 1)
-        subset.map { |i| (x[i] - y[i])**2}.mean
+        dist = subset.map { |i| basic_distance(x[i], y[i]) }.mean
+        similarity = subset.map { |i| 1 - ((x[i]-y[i]).abs/y[i]) }.mean
+
+        return dist, similarity
     end
 
 end

@@ -88,7 +88,7 @@ module Api
 
                 key = get_fragment_key(fragment_id, user_id)
                 data = get_fragment(fragment_id)
-                retVal = error_vector(key, data.length)
+                retVal = error_vector(key, data)
                 render json: retVal.to_json, 
                        status: 200
             end
@@ -143,7 +143,7 @@ module Api
                 else
                     key_length = Integer(params[:len].to_s) rescue 100
                 end
-                retVal = error_vector(params[:key].to_s, key_length)
+                retVal = error_vector(params[:key].to_s, key_length.times.map{1})
                 render json: retVal.to_json, 
                        status: 200
             end
@@ -178,9 +178,11 @@ module Api
                 retVal = []
                 all_fragments("").each do |fragment_id|
                     fragment_vals = get_fragment(fragment_id).map { |i| i["value"] }
+                    dist, similarity = distance(input_vals, fragment_vals) 
                     retVal << { "fragment": fragment_id, 
                                 "size": fragment_vals.length,
-                                "distance": distance(input_vals, fragment_vals) }
+                                "distance": dist,
+                                "similarity": similarity }
                 end
                 render json: { "input": {"size": input_vals.length},
                                "identify": retVal.sort_by { |i| i[:distance] } }, 
@@ -220,6 +222,7 @@ module Api
                 end
                 fragment_vals = data.map { |i| i["value"] }
 
+                dist, similarity = distance(input_vals, fragment_vals)
                 retVal = {
                     "input": {
                         "size": input_vals.length,
@@ -227,7 +230,8 @@ module Api
                     "fragment": {
                         "id": fragment_id,
                         "size": fragment_vals.length,
-                        "distance": distance(input_vals, fragment_vals)
+                        "distance": dist,
+                        "similarity": similarity
                     }
                 }
                 render json: retVal, 
