@@ -7,7 +7,7 @@ class ApiController < ApplicationController
 		if !(ENV["AUTH"].to_s == "" || ENV["AUTH"].to_s.downcase == "false")
 			if controller_name == "watermarks"
 				case action_name
-				when "user_fragment"
+				when "account_fragment"
 					doorkeeper_authorize! :read, :write, :admin
 				else
 					doorkeeper_authorize! :admin

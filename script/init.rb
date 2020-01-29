@@ -20,6 +20,8 @@ if ENV["AUTH"] != ""
 	app_key = `echo 'Doorkeeper::Application.first.uid' | rails c`.scan(/\h+/).last
 	app_secret = `echo 'Doorkeeper::Application.first.secret' | rails c`.scan(/\h+/).last
 	auth_url = "http://localhost:3000/oauth/token"
+
+	response_error = false
 	begin
 		response = HTTParty.post(auth_url,
 			headers: headers,
@@ -27,10 +29,11 @@ if ENV["AUTH"] != ""
 	                    client_secret: app_secret, 
 	                    grant_type: "client_credentials" }.to_json )
 	rescue => ex
-		response = nil
+		response_error = true
+		puts "Error: " + ex.inspect.to_s
 	end
-	if response.nil?
-		puts "ERROR: no token"
+	if response_error || response.code.to_s != "200"
+		puts "Error: no token"
 	else
 		token = response.parsed_response["access_token"].to_s
 		headers = { 'Content-Type' => 'application/json',

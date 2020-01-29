@@ -1,5 +1,8 @@
 Doorkeeper::Application.destroy_all
+AsyncProcess.destroy_all
 Semantic.destroy_all
 Log.destroy_all
 Store.destroy_all
+Billing.destroy_all
 Provenance.destroy_all
+Watermark.destroy_all

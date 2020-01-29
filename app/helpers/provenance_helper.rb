@@ -18,7 +18,7 @@ module ProvenanceHelper
 
         query = RDF::Query.new({
             person: {
-                RDF.type  => RDF::Vocab::FOAF.Person,
+                RDF.type => RDF::Vocab::FOAF.Person,
                 RDF::Vocab::FOAF.name => :name,
                 RDF::Vocab::FOAF.mbox => :email,
             }
@@ -31,7 +31,7 @@ module ProvenanceHelper
         if operator_name == ""
             query = RDF::Query.new({
                 person: {
-                    RDF.type  => RDF::Vocab::FOAF.Organization,
+                    RDF.type => RDF::Vocab::FOAF.Organization,
                     RDF::Vocab::FOAF.name => :name,
                     RDF::Vocab::FOAF.mbox => :email,
                 }

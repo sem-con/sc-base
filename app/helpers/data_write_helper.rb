@@ -39,8 +39,7 @@ module DataWriteHelper
 
             createLog({
                 "type": "write",
-                "scope": new_items.to_s,
-                "request": request.remote_ip.to_s}.to_json)
+                "scope": new_items.to_s})
             render plain: "",
                    status: 200
 

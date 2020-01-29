@@ -1,6 +1,18 @@
 module DataAccessHelper
+    include WatermarkHelper
+
     def getData(params)
-        Store.pluck(:item)
+        if ENV["WATERMARK"].to_s == ""
+            Store.pluck(:item)
+        else
+            retVal = []
+            all_fragments("").each do |fragment_id|
+                key = get_fragment_key(fragment_id, doorkeeper_token.application_id)
+                data = get_fragment(fragment_id)
+                retVal += apply_watermark(data, key)
+            end
+            return retVal
+        end
     end
 
     def get_provision(params, logstr)
@@ -11,7 +23,11 @@ module DataAccessHelper
         content = []
         case retVal_type.to_s
         when "JSON"
-            retVal_data.each { |item| content << JSON(item) }
+            if retVal_data.first.is_a? String 
+                retVal_data.each { |item| content << JSON(item) } rescue nil
+            else
+                content = retVal_data
+            end
             content_hash = Digest::SHA256.hexdigest(content.to_json)
         when "RDF"
             retVal_data.each { |item| content << item.to_s }
@@ -24,8 +40,7 @@ module DataAccessHelper
 
         createLog({
             "type": logstr,
-            "scope": "all (" + retVal_data.count.to_s + " records)",
-            "request": request.remote_ip.to_s}.to_json)
+            "scope": "all (" + retVal_data.count.to_s + " records)"})
 
         {
             "content": content,

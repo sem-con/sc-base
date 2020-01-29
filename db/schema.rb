@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190521215649) do
+ActiveRecord::Schema.define(version: 2020_01_16_164700) do
 
   create_table "async_processes", force: :cascade do |t|
     t.string "rid"
@@ -134,6 +134,15 @@ ActiveRecord::Schema.define(version: 20190521215649) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "prov_id"
+    t.string "key"
+  end
+
+  create_table "watermarks", force: :cascade do |t|
+    t.integer "account_id"
+    t.string "fragment"
+    t.text "key"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
 end

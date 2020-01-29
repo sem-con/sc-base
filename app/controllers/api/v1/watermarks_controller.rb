@@ -10,8 +10,8 @@ module Api
 
             # GET /api/data/fragment/:fragment_id
             # return specified (watermarked) data fragment
-            def user_fragment
-                user_id = doorkeeper_token.application_id
+            def account_fragment
+                account_id = doorkeeper_token.application_id
                 fragment_id = params[:fragment_id].to_s rescue nil
                 if !valid_fragment?(fragment_id)
                     render json: {"error": "invalid fragment_id"}.to_json,
@@ -19,25 +19,25 @@ module Api
                     return
                 end
 
-                key = get_fragment_key(fragment_id, user_id)
+                key = get_fragment_key(fragment_id, account_id)
                 data = get_fragment(fragment_id)
                 retVal = apply_watermark(data, key)
                 render json: retVal, 
                        status: 200
             end
 
-            # GET /api/watermark/user/:user_id
-            # return all data watermarked for the specified user
-            def user_data
-                user_id = params[:user_id].to_i rescue nil
-                if !valid_user?(user_id)
-                    render json: {"error": "invalid user_id"}.to_json,
+            # GET /api/watermark/account/:account_id
+            # return all data watermarked for the specified account
+            def account_data
+                account_id = params[:account_id].to_i rescue nil
+                if !valid_account?(account_id)
+                    render json: {"error": "invalid account_id"}.to_json,
                            status: 422
                     return
                 end
                 retVal = []
                 all_fragments("").each do |fragment_id|
-                    key = get_fragment_key(fragment_id, user_id)
+                    key = get_fragment_key(fragment_id, account_id)
                     data = get_fragment(fragment_id)
                     retVal += apply_watermark(data, key)
                 end
@@ -45,12 +45,12 @@ module Api
                        status: 200
             end
 
-            # GET /api/watermark/user/:user_id/fragment/:fragment_id
-            # return specified watermarked data fragment for given user
-            def user_fragment_data
-                user_id = params[:user_id].to_i rescue nil
-                if !valid_user?(user_id)
-                    render json: {"error": "invalid user_id"}.to_json,
+            # GET /api/watermark/account/:account_id/fragment/:fragment_id
+            # return specified watermarked data fragment for given account
+            def account_fragment_data
+                account_id = params[:account_id].to_i rescue nil
+                if !valid_account?(account_id)
+                    render json: {"error": "invalid account_id"}.to_json,
                            status: 422
                     return
                 end
@@ -62,19 +62,19 @@ module Api
                     return
                 end
 
-                key = get_fragment_key(fragment_id, user_id)
+                key = get_fragment_key(fragment_id, account_id)
                 data = get_fragment(fragment_id)
                 retVal = apply_watermark(data, key)
                 render json: retVal, 
                        status: 200
             end
 
-            # GET /api/watermark/user/:user_id/fragment/:fragment_id/error
-            # return error vector for specified fragment and user
-            def user_fragment_error
-                user_id = params[:user_id].to_i rescue nil
-                if !valid_user?(user_id)
-                    render json: {"error": "invalid user_id"}.to_json,
+            # GET /api/watermark/account/:account_id/fragment/:fragment_id/error
+            # return error vector for specified fragment and account
+            def account_fragment_error
+                account_id = params[:account_id].to_i rescue nil
+                if !valid_account?(account_id)
+                    render json: {"error": "invalid account_id"}.to_json,
                            status: 422
                     return
                 end
@@ -86,22 +86,22 @@ module Api
                     return
                 end
 
-                key = get_fragment_key(fragment_id, user_id)
+                key = get_fragment_key(fragment_id, account_id)
                 data = get_fragment(fragment_id)
                 retVal = error_vector(key, data)
                 render json: retVal.to_json, 
                        status: 200
             end
 
-            # GET /api/watermark/user/:user_id/fragment/:fragment_id/kpi/:kpi
-            # return error vector for specified fragment and user
-            def user_fragment_kpi
+            # GET /api/watermark/account/:account_id/fragment/:fragment_id/kpi/:kpi
+            # return error vector for specified fragment and account
+            def account_fragment_kpi
                 require 'enumerable/standard_deviation'
 
-                user_id = params[:user_id].to_i rescue nil
-                if !valid_user?(user_id)
-                    if user_id.to_s != "0"
-                        render json: {"error": "invalid user_id"}.to_json,
+                account_id = params[:account_id].to_i rescue nil
+                if !valid_account?(account_id)
+                    if account_id.to_s != "0"
+                        render json: {"error": "invalid account_id"}.to_json,
                                status: 422
                         return
                     end
@@ -115,8 +115,8 @@ module Api
                 end
 
                 data = get_fragment(fragment_id)
-                if user_id.to_s != "0"
-                    key = get_fragment_key(fragment_id, user_id)
+                if account_id.to_s != "0"
+                    key = get_fragment_key(fragment_id, account_id)
                     data = apply_watermark(data, key)
                 end
                 vals = data.map { |i| i["value"] }
@@ -139,7 +139,7 @@ module Api
             # return error vector for specified key and optional length
             def key
                 if params[:len].to_s == ""
-                    key_length = 100
+                    key_length = default_key_length()
                 else
                     key_length = Integer(params[:len].to_s) rescue 100
                 end
@@ -149,9 +149,9 @@ module Api
             end
 
             # GET /api/watermark/fragments
-            # return list of fragment identifiers, associated keys, and user_id
+            # return list of fragment identifiers, associated keys, and account_id
             def fragments_list
-                retVal = Watermark.select(:user_id, :fragment, :key).order("user_id ASC, fragment ASC").to_json(:except => :id)
+                retVal = Watermark.select(:account_id, :fragment, :key).order("account_id ASC, fragment ASC").to_json(:except => :id)
                 render json: retVal, 
                        status: 200
             end
@@ -169,11 +169,13 @@ module Api
             # return descending sorted list of fragment identifiers with distance for each value
             def identify
                 input = JSON(request.body.read) rescue nil
+
                 if input.nil?
                     render json: {"error": "invalid JSON"},
                            status: 422
                     return
                 end
+
                 input_vals = input.map { |i| i["value"] }
                 retVal = []
                 all_fragments("").each do |fragment_id|
@@ -189,7 +191,7 @@ module Api
                        status: 200
             end
 
-            # POST /api/watermark/user/:user_id/fragment/:fragment_id 
+            # POST /api/watermark/account/:account_id/fragment/:fragment_id 
             # body: one fragment of a suspicious dataset
             # return distance between provided fragment and watermarked fragment
             def compare
@@ -201,42 +203,70 @@ module Api
                 end
                 input_vals = input.map { |i| i["value"] }
 
-                user_id = params[:user_id].to_i rescue nil
-                if !valid_user?(user_id)
-                    if user_id.to_s != "0"
-                        render json: {"error": "invalid user_id"}.to_json,
-                               status: 422
-                        return
-                    end
-                end
                 fragment_id = params[:fragment_id].to_s rescue nil
                 if !valid_fragment?(fragment_id)
                     render json: {"error": "invalid fragment_id"}.to_json,
                            status: 422
                     return
                 end
-                data = get_fragment(fragment_id)
-                if user_id.to_s != "0"
-                    key = get_fragment_key(fragment_id, user_id)
-                    data = apply_watermark(data, key)
-                end
-                fragment_vals = data.map { |i| i["value"] }
 
-                dist, similarity = distance(input_vals, fragment_vals)
-                retVal = {
-                    "input": {
-                        "size": input_vals.length,
-                    },
-                    "fragment": {
-                        "id": fragment_id,
-                        "size": fragment_vals.length,
-                        "distance": dist,
-                        "similarity": similarity
+                account_id = params[:account_id].to_i rescue nil
+                if account_id == 0
+                    accounts = []
+                    data = get_fragment(fragment_id)
+                    fragment_size = 0
+                    Doorkeeper::Application.pluck(:id).each do |account_id|
+                        key = get_fragment_key(fragment_id, account_id)
+                        account_data = apply_watermark(data, key)
+                        fragment_vals = account_data.map { |i| i["value"] }
+                        fragment_size = fragment_vals.length
+                        dist, similarity = distance(input_vals, fragment_vals)
+                        accounts << {
+                            "id": account_id,
+                            "distance": dist,
+                            "similarity": similarity
+                        }
+
+                    end
+
+                    retVal = {
+                        "input": {
+                            "size": input_vals.length,
+                            "fragment": fragment_id,
+                            "fragment-size": fragment_size
+                        },
+                        "accounts": accounts.sort_by { |i| i[:distance] }
                     }
-                }
-                render json: retVal, 
-                       status: 200
+                    render json: retVal, 
+                           status: 200
 
+                else
+                    if !valid_account?(account_id)
+                        render json: {"error": "invalid account_id"}.to_json,
+                               status: 422
+                        return
+                    end
+                    data = get_fragment(fragment_id)
+                    key = get_fragment_key(fragment_id, account_id)
+                    data = apply_watermark(data, key)
+                    fragment_vals = data.map { |i| i["value"] }
+
+                    dist, similarity = distance(input_vals, fragment_vals)
+                    retVal = {
+                        "input": {
+                            "size": input_vals.length,
+                            "fragment": fragment_id,
+                            "fragment-size": fragment_vals.length
+                        },
+                        "accounts": [{
+                            "id": account_id,
+                            "distance": dist,
+                            "similarity": similarity
+                        }]
+                    }
+                    render json: retVal, 
+                           status: 200
+                end
             end
         end
     end

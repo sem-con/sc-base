@@ -123,8 +123,7 @@ module Api
                         end
                         createLog({
                             "type": "write",
-                            "scope": "meta information",
-                            "request": request.remote_ip.to_s}.to_json)
+                            "scope": "meta information"})
                         render plain: "",
                                status: 200
                     else

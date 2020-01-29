@@ -31,25 +31,25 @@ Rails.application.routes.draw do
 
 			#watermarking
 			match 'data/fragment/:fragment_id', 
-									to: 'watermarks#user_fragment',       via: 'get'
-			match 'watermark/user/:user_id',
-									to: 'watermarks#user_data',           via: 'get'
-			match 'watermark/user/:user_id/fragment/:fragment_id',
-									to: 'watermarks#user_fragment_data',  via: 'get'
-			match 'watermark/user/:user_id/fragment/:fragment_id/error',
-									to: 'watermarks#user_fragment_error', via: 'get'
-			match 'watermark/user/:user_id/fragment/:fragment_id/kpi/:kpi',
-									to: 'watermarks#user_fragment_kpi',   via: 'get'
+				to: 'watermarks#account_fragment',                via: 'get'
+			match 'watermark/account/:account_id',
+				to: 'watermarks#account_data',                    via: 'get'
+			match 'watermark/account/:account_id/fragment/:fragment_id',
+				to: 'watermarks#account_fragment_data',           via: 'get'
+			match 'watermark/account/:account_id/fragment/:fragment_id/error',
+				to: 'watermarks#account_fragment_error',          via: 'get'
+			match 'watermark/account/:account_id/fragment/:fragment_id/kpi/:kpi',
+				to: 'watermarks#account_fragment_kpi',            via: 'get'
 			match 'watermark/error/:key(/:len)',
-									to: 'watermarks#key',                 via: 'get'
+				to: 'watermarks#key',                             via: 'get'
 			match 'watermark/fragments',     
-									to: 'watermarks#fragments_list',      via: 'get'
+				to: 'watermarks#fragments_list',                  via: 'get'
 			match 'watermark/fragment/:fragment_id',     
-									to: 'watermarks#raw_data',            via: 'get'
+				to: 'watermarks#raw_data',                        via: 'get'
 			match 'watermark/identify', 
-									to: 'watermarks#identify',            via: 'post'
-			match 'watermark/user/:user_id/fragment/:fragment_id',
-									to: 'watermarks#compare',             via: 'post'
+				to: 'watermarks#identify',                        via: 'post'
+			match 'watermark/account/:account_id/fragment/:fragment_id',
+				to: 'watermarks#compare',                         via: 'post'
 		end
 	end
 	match '/oauth/applications'     => 'application#create_application',  via: 'post'

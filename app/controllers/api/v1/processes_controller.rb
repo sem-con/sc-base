@@ -47,8 +47,7 @@ module Api
                 end
                 createLog({
                     "type": "create",
-                    "scope": scope,
-                    "request": request_sh }.to_json)
+                    "scope": scope })
 
                 render plain: "",
                        status: 200
