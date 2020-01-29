@@ -11,7 +11,7 @@ module ProvenanceActivityHelper
 				prov += '    rdfs:label "input data from ' + p.endTime.iso8601 + '"^^xsd:string;' + "\n"
 			end
 			if p.prov.to_s != ""
-			 	prov += "    prov:used " + p.prov[/scr:data_.{21}/] + ";\n" rescue ""
+			 	prov += "    prov:used " + p.prov[/scr:data_\w*/] + ";\n" rescue ""
 			end
 			if !p.startTime.nil?
 				prov += '    prov:startedAtTime "' + p.startTime.iso8601 + '"^^xsd:dateTime;' + "\n"

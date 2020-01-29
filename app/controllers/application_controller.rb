@@ -4,6 +4,7 @@ class ApplicationController < ActionController::API
     after_action :cors_set_access_control_headers
     
     include ActionController::MimeResponds
+    include ApplicationHelper
 
     def cors_preflight_check
         if request.method == 'OPTIONS'
@@ -27,6 +28,11 @@ class ApplicationController < ActionController::API
         { json: { error: "Not authorized" } }
     end
 
+    def doorkeeper_forbidden_render_options(*)
+        { json: { error: "Not authorized" } }
+    end
+
+
     def revoke_token
         token = Doorkeeper::AccessToken.find_by_token(params[:token].to_s)
         if token.nil?
@@ -45,6 +51,7 @@ class ApplicationController < ActionController::API
             redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
             scopes: params[:scopes].to_s)
         if new_app.save
+            createLog({"type": "new app","scope": "id: " + new_app.id.to_s + ", name: '" + params[:name].to_s + "', scopes: '" + params[:scopes].to_s + "'" })
             render json: { id: new_app.id,
                            name: new_app.name,
                            client_id: new_app.uid,
@@ -64,6 +71,7 @@ class ApplicationController < ActionController::API
                    status: 404
         else
             app.destroy
+            createLog({"type": "destroy app","scope": "id: " + params[:id].to_s })
             render json: { id: params[:id] }.to_json,
                    status: 200
         end

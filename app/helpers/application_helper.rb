@@ -1,6 +1,11 @@
 module ApplicationHelper
     def createLog(value)
-        Log.new(item: value).save
+        app_id = doorkeeper_token.application_id rescue nil;
+        if !app_id.nil?
+            value["app_id"] = app_id
+        end
+        value["request"] = request.remote_ip.to_s
+        Log.new(item: value.to_json).save
     end
 
     def container_format

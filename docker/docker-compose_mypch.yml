@@ -1,0 +1,15 @@
+semcon:
+  image: semcon/sc-base
+  environment:
+    WATERMARK: "true"
+    SEMCON_DB: "external"
+  links:
+    - db
+  ports:
+    - "4000:3000"
+  command: ["/bin/init.sh", "${WM_TRIG}"]
+
+db:
+  image: postgres:12.1
+  volumes:
+    - sc-postgres_mypch:/var/lib/postgresql/data

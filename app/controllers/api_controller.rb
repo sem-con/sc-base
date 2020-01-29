@@ -5,9 +5,16 @@ class ApiController < ApplicationController
 
 	def authentication_check
 		if !(ENV["AUTH"].to_s == "" || ENV["AUTH"].to_s.downcase == "false")
-			if ENV["AUTH"].to_s.downcase == "billing" && (controller_name == "stores" || controller_name == "payments")
+			if controller_name == "watermarks"
 				case action_name
-				when "payments"
+				when "account_fragment"
+					doorkeeper_authorize! :read, :write, :admin
+				else
+					doorkeeper_authorize! :admin
+				end
+			elsif ENV["AUTH"].to_s.downcase == "billing" && (controller_name == "stores" || controller_name == "payments")
+				case action_name
+				when "payments", "fragment"
 					doorkeeper_authorize! :admin
 				when "buy", "paid"
 					puts "===SPECIAL HANDLING FOR COMMERCIAL DATA==="

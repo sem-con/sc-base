@@ -11,7 +11,10 @@ module Api
 
             def active
                 render json: { "active": true,
-                               "auth": ENV["AUTH"].to_s != "" }.to_json,
+                               "auth": ENV["AUTH"].to_s != "",
+                               "watermark":  ENV["WATERMARK"].to_s != "",
+                               "billing": ENV["AUTH"].to_s == "billing"
+                             }.to_json,
                        status: 200
             end
 
@@ -44,8 +47,7 @@ module Api
                 end
                 createLog({
                     "type": "create",
-                    "scope": scope,
-                    "request": request_sh }.to_json)
+                    "scope": scope })
 
                 render plain: "",
                        status: 200

@@ -1,28 +1,22 @@
-FROM ruby:2.5.3
+FROM ruby:2.5.7
 MAINTAINER "Christoph Fabianek" christoph@ownyourdata.eu
 
 WORKDIR /usr/src/app
 ENV RAILS_ROOT $WORKDIR
 RUN mkdir -p $RAILS_ROOT/tmp/pids && \
-	echo "deb http://deb.debian.org/debian stretch-backports main" >> /etc/apt/sources.list && \
 	apt-get update && \
 	apt-get install -y --no-install-recommends \
- 		libsodium-dev=1.0.17-1~bpo9+1 \
-#  		libsodium-dev \
+  		libsodium-dev \
 		build-essential && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY Gemfile $WORKDIR
 
-RUN gem update --system && \
-	gem install bundler && \
-	bundle install && \
-	bundle update --bundler
+RUN bundle install
 
 COPY . .
 
 RUN bundle update && \
-	rake db:migrate && \
 	ln -s $PWD/script/init.sh /bin/init.sh
 
 CMD ["./script/run.sh"]

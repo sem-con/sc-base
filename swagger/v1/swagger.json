@@ -425,7 +425,26 @@
         ],
         "responses": {
           "200": {
-            "description": "success"
+            "description": "success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "billing": {
+                  "type": "hash"
+                },
+                "provision": {
+                  "type": "hash"
+                },
+                "validation": {
+                  "type": "hash"
+                }
+              },
+              "required": [
+                "billing",
+                "provision",
+                "validation"
+              ]
+            }
           }
         }
       }
@@ -449,7 +468,22 @@
         ],
         "responses": {
           "200": {
-            "description": "success"
+            "description": "success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "secret": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "secret"
+              ]
+            }
           }
         }
       }
@@ -498,6 +532,351 @@
         "responses": {
           "200": {
             "description": "success"
+          }
+        }
+      }
+    },
+    "/api/data/fragment/{id}": {
+      "get": {
+        "summary": "apply watermarking to data",
+        "tags": [
+          "Watermarking"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "identification ('id') for watermarked data fragment",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/watermark/account/{account_id}": {
+      "get": {
+        "summary": "get watermarked data for given account",
+        "tags": [
+          "Watermarking"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "type": "integer",
+            "description": "identification for account within container (requires key & secret)",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/watermark/account/{account_id}/fragment/{fragment_id}": {
+      "get": {
+        "summary": "get specified watermarked data fragment for given account",
+        "tags": [
+          "Watermarking"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "type": "integer",
+            "description": "identification for account within container (requires key & secret)",
+            "required": true
+          },
+          {
+            "name": "fragment_id",
+            "in": "path",
+            "type": "integer",
+            "description": "identification ('id') for watermarked data fragment",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      },
+      "post": {
+        "summary": "get distance and similarity for given account, fragment_id, and provided dataset",
+        "tags": [
+          "Watermarking"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "input",
+            "in": "body"
+          },
+          {
+            "name": "account_id",
+            "in": "path",
+            "type": "integer",
+            "description": "identification for account within container (requires key & secret)",
+            "required": true
+          },
+          {
+            "name": "fragment_id",
+            "in": "path",
+            "type": "integer",
+            "description": "identification ('id') for watermarked data fragment",
+            "required": true
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "422": {
+            "description": "invalid format"
+          },
+          "500": {
+            "description": "error"
+          }
+        }
+      }
+    },
+    "/api/watermark/account/{account_id}/fragment/{fragment_id}/error": {
+      "get": {
+        "summary": "get error vector for specified watermarked data fragment and given account",
+        "tags": [
+          "Watermarking"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "type": "integer",
+            "description": "identification for account within container (requires key & secret)",
+            "required": true
+          },
+          {
+            "name": "fragment_id",
+            "in": "path",
+            "type": "integer",
+            "description": "identification ('id') for watermarked data fragment",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/watermark/account/{account_id}/fragment/{fragment_id}/kpi/{kpi}": {
+      "get": {
+        "summary": "get KPIs for specified watermarked data fragment and given account",
+        "tags": [
+          "Watermarking"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "type": "integer",
+            "description": "identification for account within container (requires key & secret)",
+            "required": true
+          },
+          {
+            "name": "kpi",
+            "in": "path",
+            "type": "string",
+            "description": "'mean' for arithmetic mean and 'stdv' for standard deviation",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/watermark/error/{key}": {
+      "get": {
+        "summary": "get error vector of length 100 for specified key",
+        "tags": [
+          "Watermarking"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "type": "integer",
+            "description": "numerical input (seed) that generates random error vector",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/watermark/error/{key}/{len}": {
+      "get": {
+        "summary": "get error vector of length \"len\" for specified key",
+        "tags": [
+          "Watermarking"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "type": "integer",
+            "description": "numerical input (seed) that generates random error vector",
+            "required": true
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "type": "integer",
+            "description": "define length of error vector",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/watermark/fragments": {
+      "get": {
+        "summary": "get list of fragment identifiers, associated keys, and account_id",
+        "tags": [
+          "Watermarking"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/watermark/fragment/{fragment_id}": {
+      "get": {
+        "summary": "get specified (not watermarked) data fragment",
+        "tags": [
+          "Watermarking"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "fragment_id",
+            "in": "path",
+            "type": "integer",
+            "description": "identification ('id') for watermarked data fragment",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/watermark/identify": {
+      "post": {
+        "summary": "get descending sorted list of fragment identifiers for provided dataset",
+        "tags": [
+          "Watermarking"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "input",
+            "in": "body"
+          }
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "422": {
+            "description": "invalid format"
+          },
+          "500": {
+            "description": "error"
           }
         }
       }

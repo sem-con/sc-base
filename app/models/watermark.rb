@@ -1,0 +1,2 @@
+class Watermark < ApplicationRecord
+end

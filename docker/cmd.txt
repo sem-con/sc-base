@@ -1,0 +1,1 @@
+export WM_TRIG=$(<wm.trig); docker-compose -f docker-compose_mypch.yml up -d
