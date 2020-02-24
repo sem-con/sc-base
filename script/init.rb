@@ -15,7 +15,7 @@ else
 end
 
 headers = { 'Content-Type' => 'application/json' }
-if ENV["AUTH"] != ""
+if ENV["AUTH"].to_s != ""
 	# get APP_KEY & APP_SECRET
 	app_key = `echo 'Doorkeeper::Application.first.uid' | rails c`.scan(/\h+/).last
 	app_secret = `echo 'Doorkeeper::Application.first.secret' | rails c`.scan(/\h+/).last
