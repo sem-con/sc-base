@@ -21,7 +21,9 @@ module Api
             def init
                 # clean up
                 uid = SecureRandom.uuid
-                Semantic.create!(uid: uid)
+                if Semantic.count == 0
+                    Semantic.create!(uid: uid)
+                end
 
                 request_sh = "run.sh"
                 if params[:run].to_s == ""

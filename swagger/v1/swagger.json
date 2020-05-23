@@ -338,6 +338,121 @@
         }
       }
     },
+    "/api/receipts": {
+      "get": {
+        "summary": "get all receipts for container",
+        "tags": [
+          "Data receipt"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success",
+            "schema": {
+              "type": "array"
+            }
+          }
+        }
+      }
+    },
+    "/api/receipt/{id}": {
+      "get": {
+        "summary": "retrieve information for specified receipt",
+        "tags": [
+          "Data receipt"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "hash value provided by write operation",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/receipt/{ttl}/{id}": {
+      "get": {
+        "summary": "retrieve information for specified receipt with maximum recursion level defined in ttl (time-to-live)",
+        "tags": [
+          "Data receipt"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "ttl",
+            "in": "path",
+            "type": "integer",
+            "description": "recursion level to query subsequent containers",
+            "required": true
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "hash value provided by write operation",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
+    "/api/receipt/{hash}": {
+      "post": {
+        "summary": "store receipt data for write request",
+        "tags": [
+          "Data receipt"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "hash",
+            "in": "path",
+            "type": "string",
+            "description": "hash value of retrieved data",
+            "required": true
+          },
+          {
+            "name": "input",
+            "in": "body",
+            "description": "receipt JSON provided by write operation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
     "/api/meta": {
       "get": {
         "summary": "detailed container information",

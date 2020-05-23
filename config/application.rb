@@ -43,5 +43,6 @@ module Base
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
     config.active_job.queue_adapter = :delayed_job
+    config.active_record.sqlite3.represent_boolean_as_integer = true
   end
 end

@@ -119,7 +119,7 @@ module Api
                     key = get_fragment_key(fragment_id, account_id)
                     data = apply_watermark(data, key)
                 end
-                vals = data.map { |i| i["value"] }
+                vals = data.map { |i| JSON(i["item"])["value"] }
 
                 case params[:kpi].to_s
                 when "mean"
@@ -179,7 +179,7 @@ module Api
                 input_vals = input.map { |i| i["value"] }
                 retVal = []
                 all_fragments("").each do |fragment_id|
-                    fragment_vals = get_fragment(fragment_id).map { |i| i["value"] }
+                    fragment_vals = get_fragment(fragment_id).map { |i| JSON(i["item"])["value"] }
                     dist, similarity = distance(input_vals, fragment_vals) 
                     retVal << { "fragment": fragment_id, 
                                 "size": fragment_vals.length,
@@ -218,7 +218,7 @@ module Api
                     Doorkeeper::Application.pluck(:id).each do |account_id|
                         key = get_fragment_key(fragment_id, account_id)
                         account_data = apply_watermark(data, key)
-                        fragment_vals = account_data.map { |i| i["value"] }
+                        fragment_vals = account_data.map { |i| i["item"]["value"] }
                         fragment_size = fragment_vals.length
                         dist, similarity = distance(input_vals, fragment_vals)
                         accounts << {
@@ -249,7 +249,7 @@ module Api
                     data = get_fragment(fragment_id)
                     key = get_fragment_key(fragment_id, account_id)
                     data = apply_watermark(data, key)
-                    fragment_vals = data.map { |i| i["value"] }
+                    fragment_vals = data.map { |i| i["item"]["value"] }
 
                     dist, similarity = distance(input_vals, fragment_vals)
                     retVal = {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_16_164700) do
+ActiveRecord::Schema.define(version: 2020_05_12_225417) do
 
   create_table "async_processes", force: :cascade do |t|
     t.string "rid"
@@ -70,6 +70,8 @@ ActiveRecord::Schema.define(version: 2020_01_16_164700) do
     t.text "item"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "read_hash"
+    t.string "receipt"
   end
 
   create_table "oauth_access_grants", force: :cascade do |t|
@@ -120,6 +122,8 @@ ActiveRecord::Schema.define(version: 2020_01_16_164700) do
     t.string "input_hash"
     t.datetime "startTime"
     t.datetime "endTime"
+    t.string "receipt_hash"
+    t.text "scope"
   end
 
   create_table "semantics", force: :cascade do |t|

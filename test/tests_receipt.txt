@@ -1,0 +1,6 @@
+docker rm -f test_receipt
+IMAGE=semcon/sc-base:latest; docker run --name test_receipt -e IMAGE_SHA256="$(docker image ls --no-trunc -q $IMAGE | tail -1)" -e IMAGE_NAME=$IMAGE -e SERVICE_ENDPOINT="http://192.168.178.21:4000" -p 4000:3000 -d $IMAGE
+
+curl -H "Content-Type: application/json" -d '[{"field1":"value", "field2":4.2}]' -X POST http://localhost:4000/api/data
+
+curl -s http://localhost:4000/api/data | curl -s -X POST -d @- -H "Content-Type: application/json" http://localhost:4000/api/data | curl -X POST -d @- -H "Content-Type: application/json" http://localhost:4000/api/receipt

@@ -81,7 +81,7 @@ module Api
                        status: 200
             end
 
-            def plain # /api/data/plain
+            def show
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
                     billing = {
                         "payment-info": payment_info_text.to_s,
@@ -92,28 +92,98 @@ module Api
                     retVal = billing.to_json
                 else
                     retVal_type = container_format
+                    if (Date.parse(params[:id].to_s) rescue nil).nil?
+                        retVal_data = getData("id=" + params[:id].to_s)
+                    else
+                        retVal_data = getData("day=" + params[:id].to_s)
+                    end
+                    if retVal_data.nil?
+                        retVal_data = []
+                    end
+                    content = []
+                    case retVal_type.to_s
+                    when "JSON"
+                        if retVal_data.count > 0
+                            if retVal_data.first["item"].is_a? String 
+                                retVal_data.each { |el| content << JSON(el["item"]) } rescue nil
+                            else
+                                retVal_data.each { |el| content << el["item"] } rescue nil
+                            end
+                        end
+                    when "RDF"
+                        retVal_data.each { |el| content << el["item"].to_s }
+                    else
+                        content = ""
+                        retVal_data.each { |el| content += el["item"].to_s + "\n" } rescue ""
+                    end
+
+                    if retVal_type == "JSON"
+                        createLog({
+                            "type": "read plain " + retVal_type.to_s,
+                            "scope": retVal_data.map{|h| h["id"]}.flatten.sort.to_json}, # "all (" + retVal_data.count.to_s + " records)"},
+                            Digest::SHA256.hexdigest(content.to_json))
+                        render json: content,
+                               status: 200
+                    else
+                        createLog({
+                            "type": "read plain " + retVal_type.to_s,
+                            "scope": retVal_data.map{|h| h["id"]}.flatten.sort.to_json}, # "all (" + retVal_data.count.to_s + " records)"},
+                            Digest::SHA256.hexdigest(content.to_s))
+                        render plain: content,
+                               status: 200
+                    end
+                end
+            end
+
+            def plain # /api/data/plain
+                if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
+                    billing = {
+                        "payment-info": payment_info_text.to_s,
+                        "methods": ["Ether"],
+                        "provider": payment_seller_email.to_s,
+                        "provider-pubkey-id": payment_seller_pubkey_id.to_s
+                    }.stringify_keys
+                    render json: billing,
+                           status: 200
+                else
+                    retVal_type = container_format
                     retVal_data = getData(params)
                     if retVal_data.nil?
                         retVal_data = []
                     end
+                    content = []
                     case retVal_type.to_s
                     when "JSON"
-                        retVal = []
-                        if retVal_data.first.is_a? String 
-                            retVal_data.each { |item| retVal << JSON(item) } rescue nil
-                        else
-                            retVal = retVal_data
+                        if retVal_data.count > 0
+                            if retVal_data.first["item"].is_a? String 
+                                retVal_data.each { |el| content << JSON(el["item"]) }
+                            else
+                                retVal_data.each { |el| content << el["item"] }
+                            end
                         end
-                        retVal = retVal.to_json
+                    when "RDF"
+                        retVal_data.each { |el| content << el["item"].to_s }
                     else
-                        retVal = retVal_data.join("\n")
+                        content = ""
+                        retVal_data.each { |el| content += el["item"].to_s + "\n" }
                     end
-                    createLog({
-                        "type": "read plain " + retVal_type.to_s,
-                        "scope": "all (" + retVal_data.count.to_s + " records)"})
+
+                    if retVal_type == "JSON"
+                        createLog({
+                            "type": "read plain " + retVal_type.to_s,
+                            "scope": retVal_data.map{|h| h["id"]}.flatten.sort.to_json}, # "all (" + retVal_data.count.to_s + " records)"},
+                            Digest::SHA256.hexdigest(content.to_json))
+                        render json: content,
+                               status: 200
+                    else
+                        createLog({
+                            "type": "read plain " + retVal_type.to_s,
+                            "scope": retVal_data.map{|h| h["id"]}.flatten.sort.to_json}, # "all (" + retVal_data.count.to_s + " records)"},
+                            Digest::SHA256.hexdigest(content.to_s))
+                        render plain: content,
+                               status: 200
+                    end
                 end
-                render plain: retVal, 
-                       status: 200
             end
 
             def full # /api/data/full
@@ -235,6 +305,7 @@ module Api
                 # 1) simple array with data
                 # 2) has top-level "content" attribute
                 # 3) has top-level "provision" attributes
+                read_hash = ""
                 usage_policy = ""
                 content = []
                 if input.class == Hash
@@ -243,19 +314,23 @@ module Api
                         content = input["provision"]["content"] rescue ""
                         usage_policy = input["provision"]["usage-policy"] rescue ""
                         provenance = input["provision"]["provenance"] rescue ""
+                        read_hash = input["validation"]["hash"] rescue ""
                     else
                         if !input["content"].nil?
                             # has top-level "content" attribute
                             content = input["content"] rescue ""
                             usage_policy = input["usage-policy"] rescue ""
                             provenance = input["provenance"] rescue ""
+                            read_hash = input["validation"]["hash"] rescue ""
                         else
                             # simple array with data
                             content = input
+                            read_hash = Digest::SHA256.hexdigest(input.to_json)
                         end
                     end
                 else
                     content = input
+                    read_hash = Digest::SHA256.hexdigest(input.to_json)
                 end
 
                 cf = container_format
@@ -348,7 +423,7 @@ module Api
                     return
                 end
                  
-                writeData(content, input, provenance)
+                writeData(content, input, provenance, read_hash)
 
             end
         end

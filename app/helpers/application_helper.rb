@@ -1,11 +1,20 @@
 module ApplicationHelper
-    def createLog(value)
+    def createLog(value, read_hash="")
         app_id = doorkeeper_token.application_id rescue nil;
         if !app_id.nil?
             value["app_id"] = app_id
         end
         value["request"] = request.remote_ip.to_s
-        Log.new(item: value.to_json).save
+        Log.new(item: value.to_json, read_hash: read_hash).save
+    end
+
+    def createReceipt(input_hash, item_ids, timestamp)
+        {
+            "input_hash": input_hash,
+            "item_ids": item_ids,
+            "timestamp": timestamp.iso8601,
+            "sc_uid": Semantic.first.uid
+        }
     end
 
     def container_format

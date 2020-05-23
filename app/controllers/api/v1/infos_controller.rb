@@ -22,6 +22,7 @@ module Api
                 if ENV["IMAGE_NAME"].to_s != ""
                     retVal["image"] = ENV["IMAGE_NAME"].to_s
                 end
+                retVal["serviceEndPoint"] = ENV["SERVICE_ENDPOINT"].to_s
                 retVal["records"] = Store.count
                 render json: retVal.to_json, 
                        status: 200

@@ -6,7 +6,7 @@ module WatermarkHelper
         if start < 1
             start = 1
         end
-        return Store.pluck(:item).first(start*size).last(size)
+        return Store.select(:id, :item).to_a.first(start*size).last(size)
     end
 
     def all_fragments(fragment)
@@ -34,9 +34,9 @@ module WatermarkHelper
         ev = error_vector(key, data)
         i = 0
         data.each do |item|
-            new_item = item.stringify_keys
+            new_item = item.item.stringify_keys
             new_item["value"] += ev[i]
-            retVal << new_item
+            retVal << {id: item.id, item: new_item}.stringify_keys
             i += 1
         end
         return retVal

@@ -36,7 +36,7 @@ class ApplicationController < ActionController::API
     def revoke_token
         token = Doorkeeper::AccessToken.find_by_token(params[:token].to_s)
         if token.nil?
-            render plain: "",
+            render json: {"error": "token not found"},
                    status: 404
         else
             token.destroy
@@ -78,7 +78,7 @@ class ApplicationController < ActionController::API
     end
 
     def missing
-        render plain: "",
+        render json: {"error": "invalid path"},
                status: 404
     end
 
