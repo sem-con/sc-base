@@ -17,6 +17,10 @@ module Api
                         init.each_graph{ |g| g.graph_name == SEMCON_ONTOLOGY + "BaseConfiguration" ? uc = g : nil }
                         title = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new(PURL_TITLE), :value] }.first.value.to_s
                         retVal["title"] = title
+                        description = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new(PURL_DESCRIPTION), :value] }.first.value.to_s
+                        if description != ""
+                            retVal["description"] = description
+                        end
                     end
                 end
                 if ENV["IMAGE_NAME"].to_s != ""

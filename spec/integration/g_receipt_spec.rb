@@ -16,7 +16,7 @@ describe 'SEMCON RECEIPT API' do
 	end
 
 	path '/api/receipt/{id}' do
-		get 'retrieve information for specified receipt' do
+		get 'retrieve information for specified receipt (including record IDs)' do
 			tags 'Data receipt'
 			produces 'application/json'
 			parameter name: :id, in: :path, type: :string,
@@ -31,7 +31,39 @@ describe 'SEMCON RECEIPT API' do
 	end
 
 	path '/api/receipt/{ttl}/{id}' do
-		get 'retrieve information for specified receipt with maximum recursion level defined in ttl (time-to-live)' do
+		get 'retrieve complete information for specified receipt with maximum recursion level defined in ttl (time-to-live)' do
+			tags 'Data receipt'
+			produces 'application/json'
+			parameter name: :ttl, in: :path, type: :integer,
+				description: "recursion level to query subsequent containers"
+			parameter name: :id, in: :path, type: :string,
+				description: "hash value provided by write operation"
+			response '200', 'success' do
+				run_test!
+			end
+			response '404', 'not found' do
+				run_test!
+			end
+		end
+	end
+
+	path '/api/rcpt/{id}' do
+		get 'retrieve abbreviated information for specified receipt (without record IDs)' do
+			tags 'Data receipt'
+			produces 'application/json'
+			parameter name: :id, in: :path, type: :string,
+				description: "hash value provided by write operation"
+			response '200', 'success' do
+				run_test!
+			end
+			response '404', 'not found' do
+				run_test!
+			end
+		end
+	end
+
+	path '/api/rcpt/{ttl}/{id}' do
+		get 'retrieve abbreviated information for specified receipt with maximum recursion level defined in ttl (time-to-live)' do
 			tags 'Data receipt'
 			produces 'application/json'
 			parameter name: :ttl, in: :path, type: :integer,

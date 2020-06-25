@@ -111,7 +111,7 @@ ActiveRecord::Schema.define(version: 2020_05_12_225417) do
     t.string "scopes", default: "", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "confidential", default: true, null: false
+    t.boolean "confidential", default: false, null: false
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
