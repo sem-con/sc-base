@@ -100,7 +100,31 @@ module Api
             end
 
             def revoke
-                render json: {"hello": "world"},
+                @prov = Provenance.find_by_receipt_hash(params[:id].to_s)
+                if @prov.nil?
+                    render json: {"error": "not found"},
+                           status: 404
+                    return
+                end
+
+                if @prov.revocation_key != params["revocation_key"].to_s
+                    render json: {"error": "invalid revocation key"},
+                           status: 403
+                    return
+                end
+
+                # remove all items
+                item_ids = JSON.parse(@prov.scope)
+                item_ids.each do |item|
+                    Store.find(item).delete
+                end
+
+                # write Log
+                createLog({
+                    "type": "revoke receipt",
+                    "scope": params[:id].to_s + ": " + item_ids.to_s})
+
+                render plain: "",
                        status: 200
             end
         end

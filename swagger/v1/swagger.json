@@ -440,7 +440,7 @@
           {
             "name": "input",
             "in": "body",
-            "description": "complete original receipt"
+            "description": "revocation key"
           }
         ],
         "consumes": [

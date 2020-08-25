@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_05_12_225417) do
+ActiveRecord::Schema.define(version: 2020_08_25_151631) do
 
   create_table "async_processes", force: :cascade do |t|
     t.string "rid"
@@ -111,7 +111,7 @@ ActiveRecord::Schema.define(version: 2020_05_12_225417) do
     t.string "scopes", default: "", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "confidential", default: false, null: false
+    t.boolean "confidential", default: true, null: false
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 
@@ -124,6 +124,7 @@ ActiveRecord::Schema.define(version: 2020_05_12_225417) do
     t.datetime "endTime"
     t.string "receipt_hash"
     t.text "scope"
+    t.string "revocation_key"
   end
 
   create_table "semantics", force: :cascade do |t|

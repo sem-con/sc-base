@@ -41,9 +41,11 @@ module DataWriteHelper
             receipt_hash = Digest::SHA256.hexdigest(receipt_json.to_json)
 
             # finalize provenance
+            revocation_key = SecureRandom.hex(16).to_s
             Provenance.find(prov_id).update_attributes(
                 scope: new_items.to_s,
                 receipt_hash: receipt_hash.to_s,
+                revocation_key: revocation_key,
                 endTime: Time.now.utc)
 
             # write Log
@@ -53,7 +55,8 @@ module DataWriteHelper
 
             render json: {"receipt": receipt_hash.to_s,
                           "serviceEndpoint": ENV["SERVICE_ENDPOINT"].to_s,
-                          "read_hash": read_hash},
+                          "read_hash": read_hash,
+                          "revocation_key": revocation_key},
                    status: 200
 
         rescue => ex

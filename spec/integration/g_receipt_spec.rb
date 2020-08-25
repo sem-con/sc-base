@@ -55,7 +55,7 @@ describe 'SEMCON RECEIPT API' do
 				description: "hash value provided by write operation"
 			consumes 'application/json'
 			parameter name: :input, in: :body,
-				description: "complete original receipt"
+				description: "revocation key"
 			response '200', 'success' do
 				run_test!
 			end
