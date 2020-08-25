@@ -98,6 +98,11 @@ module Api
                            status: 200
                 end
             end
+
+            def revoke
+                render json: {"hello": "world"},
+                       status: 200
+            end
         end
     end
 end
