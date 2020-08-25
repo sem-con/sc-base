@@ -5,7 +5,7 @@
 #   gem 'sqlite3'
 #
 default: &default
-  host: db_pi2
+  host: db
   adapter: postgresql
   encoding: unicode
   port: 5432

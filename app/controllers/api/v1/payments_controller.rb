@@ -5,6 +5,7 @@ module Api
             include ApplicationHelper
             include DataAccessHelper
             include ProvenanceHelper
+            include PaymentHelper
 
             # respond only to JSON requests
             respond_to :json
@@ -93,13 +94,13 @@ module Api
 
                 # get payment infos ===
                 payment_infos_url = billing_service_url + "/api/payment_info"
-                payment_info = HTTParty.get(payment_infos_url)
+                payment_infos = HTTParty.get(payment_infos_url)
                 if response.code != 200
                     render json: {"error": "failed to collect payment infos"}, 
                            status: response.code
                     return
                 end
-                address_path = payment_info["path"].to_s rescue ""
+                address_path = payment_infos["path"].to_s rescue ""
 
                 # write to model billing ===
                 bil = Billing.new(
@@ -112,12 +113,12 @@ module Api
                     offer_timestamp: Time.now,
                     offer_info: offer_info,
                     valid_until: offer_end,
-                    payment_address: payment_info["address"].to_s,
+                    payment_address: payment_infos["address"].to_s,
                     payment_method: payment_method,
                     address_path: address_path,
                     request: request_str,
                     seller: payment_info["email"].to_s,
-                    seller_pubkey_id: payment_info["pubkey-id"].to_s,
+                    seller_pubkey_id: payment_infos["pubkey-id"].to_s,
                     usage_policy: usage_policy)
                 if !bil.save
                     render json: {"error": "saving payment request failed"}, 
@@ -159,7 +160,7 @@ module Api
                     "payment-method": "Ether",
                     "payment-address": bil.payment_address,
                     "cost": bil.offer_price,
-                    "payment-info": payment_info_text.to_s
+                    "payment-info": payment_info
                 }.stringify_keys
 
                 billing_hash = Digest::SHA256.hexdigest(billing.to_json)

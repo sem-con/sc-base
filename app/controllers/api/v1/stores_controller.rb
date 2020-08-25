@@ -6,6 +6,7 @@ module Api
             include DataWriteHelper
             include PolicyMatchHelper
             include ProvenanceHelper
+            include PaymentHelper
 
             # respond only to JSON requests
             respond_to :json
@@ -15,8 +16,8 @@ module Api
             def index # /api/data
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
                     billing = {
-                        "payment-info": payment_info_text.to_s,
-                        "payment-methods": ["Ether"],
+                        "payment-info": payment_info,
+                        "payment-methods": payment_methods,
                         "provider": payment_seller_email.to_s,
                         "provider-pubkey-id": payment_seller_pubkey_id.to_s
                     }.stringify_keys
@@ -84,7 +85,7 @@ module Api
             def show
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
                     billing = {
-                        "payment-info": payment_info_text.to_s,
+                        "payment-info": payment_info,
                         "methods": ["Ether"],
                         "provider": payment_seller_email.to_s,
                         "provider-pubkey-id": payment_seller_pubkey_id.to_s
@@ -92,10 +93,12 @@ module Api
                     retVal = billing.to_json
                 else
                     retVal_type = container_format
-                    if (Date.parse(params[:id].to_s) rescue nil).nil?
+                    if (params[:id].to_i.to_s == params[:id].to_s)
                         retVal_data = getData("id=" + params[:id].to_s)
-                    else
+                    elsif !(Date.parse(params[:id].to_s) rescue nil).nil?
                         retVal_data = getData("day=" + params[:id].to_s)
+                    else
+                        retVal_data = getData(params[:id].to_s)
                     end
                     if retVal_data.nil?
                         retVal_data = []
@@ -138,7 +141,7 @@ module Api
             def plain # /api/data/plain
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
                     billing = {
-                        "payment-info": payment_info_text.to_s,
+                        "payment-info": payment_info,
                         "methods": ["Ether"],
                         "provider": payment_seller_email.to_s,
                         "provider-pubkey-id": payment_seller_pubkey_id.to_s
@@ -189,7 +192,7 @@ module Api
             def full # /api/data/full
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
                     billing = {
-                        "payment-info": payment_info_text.to_s,
+                        "payment-info": payment_info,
                         "methods": ["Ether"],
                         "provider": payment_seller_email.to_s,
                         "provider-pubkey-id": payment_seller_pubkey_id.to_s
@@ -257,7 +260,7 @@ module Api
             def provision # /api/data/provision
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
                     billing = {
-                        "payment-info": payment_info_text.to_s,
+                        "payment-info": payment_info,
                         "methods": ["Ether"],
                         "provider": payment_seller_email.to_s,
                         "provider-pubkey-id": payment_seller_pubkey_id.to_s

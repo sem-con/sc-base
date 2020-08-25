@@ -19,7 +19,7 @@ module Api
                         retVal["title"] = title
                         description = RDF::Query.execute(uc) { pattern [:subject, RDF::URI.new(PURL_DESCRIPTION), :value] }.first.value.to_s
                         if description != ""
-                            retVal["description"] = description
+                            retVal["description"] = description.strip
                         end
                     end
                 end

@@ -14,7 +14,7 @@ Rails.application.routes.draw do
 			match 'active',           to: 'processes#active',       via: 'get'
 			match 'init',             to: 'processes#init',         via: 'post'
 			match 'meta',             to: 'semantics#create',       via: 'post'
-			match 'meta',             to: 'semantics#show',	      via: 'get'
+			match 'meta',             to: 'semantics#show',	        via: 'get'
 			match 'meta/info',        to: 'semantics#show_info',    via: 'get'
 			match 'meta/usage',       to: 'semantics#show_usage',   via: 'get'
 			match 'meta/example',     to: 'semantics#show_example', via: 'get'
