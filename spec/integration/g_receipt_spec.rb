@@ -47,6 +47,24 @@ describe 'SEMCON RECEIPT API' do
 		end
 	end
 
+	path '/api/receipt/{id}/revoke' do
+		delete 'revoke all records for specified receipt' do
+			tags 'Data receipt'
+			produces 'application/json'
+			parameter name: :id, in: :path, type: :string,
+				description: "hash value provided by write operation"
+			consumes 'application/json'
+			parameter name: :input, in: :body,
+				description: "complete original receipt"
+			response '200', 'success' do
+				run_test!
+			end
+			response '404', 'not found' do
+				run_test!
+			end			
+		end
+	end
+
 	path '/api/rcpt/{id}' do
 		get 'retrieve abbreviated information for specified receipt (without record IDs)' do
 			tags 'Data receipt'

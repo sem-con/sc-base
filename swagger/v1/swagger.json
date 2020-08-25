@@ -420,6 +420,42 @@
         }
       }
     },
+    "/api/receipt/{id}/revoke": {
+      "delete": {
+        "summary": "revoke all records for specified receipt",
+        "tags": [
+          "Data receipt"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "hash value provided by write operation",
+            "required": true
+          },
+          {
+            "name": "input",
+            "in": "body",
+            "description": "complete original receipt"
+          }
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "success"
+          },
+          "404": {
+            "description": "not found"
+          }
+        }
+      }
+    },
     "/api/rcpt/{id}": {
       "get": {
         "summary": "retrieve abbreviated information for specified receipt (without record IDs)",
