@@ -1,6 +1,6 @@
 module PaymentHelper
 
-    def payment_info
+    def payment_info(params)
         if Semantic.count > 0 and Semantic.first.validation.to_s != ""
             # check data format in configuration
             init = RDF::Repository.new()

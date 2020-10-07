@@ -13,11 +13,11 @@ module DataWriteHelper
             end
 
             # write provenance
-            input_hash = Digest::SHA256.hexdigest(input.to_json)
+            # input_hash = read_hash / Digest::SHA256.hexdigest(input.to_json)
             prov_timestamp = Time.now.utc
             prov = Provenance.new(
                 prov: provenance, 
-                input_hash: input_hash,
+                input_hash: read_hash,
                 startTime: prov_timestamp)
             prov.save
             prov_id = prov.id
@@ -37,7 +37,7 @@ module DataWriteHelper
             end
 
             # create receipt information
-            receipt_json = createReceipt(input_hash, new_items, prov_timestamp)
+            receipt_json = createReceipt(read_hash, new_items, prov_timestamp)
             receipt_hash = Digest::SHA256.hexdigest(receipt_json.to_json)
 
             # finalize provenance
@@ -46,7 +46,8 @@ module DataWriteHelper
                 scope: new_items.to_s,
                 receipt_hash: receipt_hash.to_s,
                 revocation_key: revocation_key,
-                endTime: Time.now.utc)
+                endTime: Time.now.utc,
+                input_hash: read_hash)
 
             # write Log
             createLog({

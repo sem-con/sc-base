@@ -207,104 +207,125 @@ module Api
             end
 
             def paid
-                billing_service_url = payment_billing_service_url
+                if params["buyer-identification"].to_s == "A-Trust"
+                    # validate input ===
 
-                # parse input parameters ===
-                tx = params[:tx].to_s
-                if tx[0..1] != "0x"
-                    tx = "0x" + tx
-                end
+                    # validate signature
+                    # request to srv-eidas for verification of params["buyer-signature"]
 
-                # check transaction ===
-                check_transaction_url = billing_service_url + "/api/transaction?tx=" + tx
-                response = HTTParty.get(check_transaction_url)
-                if response.code != 200
-                    render json: {"error": "retrieving transaction failed"}, 
-                           status: response.code
+                    # validate PayPal ID with params["payment-id"]
+                    # curl -v -X GET https://api.sandbox.paypal.com/v2/checkout/orders/1TN16339HG9468033 -H "Content-Type: application/json" -H "Authorization: Bearer A21AAL0P00YjxPWgdyQGnew4NX0i0zrrFUdXbxJtoNPwOXj1Uc775zIOJbkHO3oqBvBTIRKV4PZi4ZoOSqmmIwwrw6mhmd0zA"
+
+
+                    # create Billing record ===
+
+                    # return data  ===
+                    retVal = getData(params["request"])
+
+                    render json: retVal,
+                           status: 200
                     return
-                end
-                uid = response.parsed_response["input"].to_s
-                address = response.parsed_response["to"].to_s
-                price = response.parsed_response["value"].to_f
-                ts = response.parsed_response["timestamp"].to_i rescue 0
+                else
+                    # === handle payment with Ether ===
+                    billing_service_url = payment_billing_service_url
 
-                if uid[0..1] == "0x"
-                    uid = uid[2..-1]
-                end
+                    # parse input parameters ===
+                    tx = params[:tx].to_s
+                    if tx[0..1] != "0x"
+                        tx = "0x" + tx
+                    end
 
-                # bil = Billing.first
-                bil = Billing.find_by_uid(uid)
-                if bil.nil?
-                    render json: {"error": "invalid transaction input"}, 
-                           status: 412
-                    return
-                end
-                
-                if address.downcase != bil.payment_address.to_s.downcase
-                    render json: {"error": "invalid payment address"}, 
-                           status: 412
-                    return
-                end
+                    # check transaction ===
+                    check_transaction_url = billing_service_url + "/api/transaction?tx=" + tx
+                    response = HTTParty.get(check_transaction_url)
+                    if response.code != 200
+                        render json: {"error": "retrieving transaction failed"}, 
+                               status: response.code
+                        return
+                    end
+                    uid = response.parsed_response["input"].to_s
+                    address = response.parsed_response["to"].to_s
+                    price = response.parsed_response["value"].to_f
+                    ts = response.parsed_response["timestamp"].to_i rescue 0
 
-                if price < bil.offer_price
-                    render json: {"error": "not enough funds"}, 
-                           status: 412
-                    return
-                end
+                    if uid[0..1] == "0x"
+                        uid = uid[2..-1]
+                    end
 
-                if ts > bil.valid_until.to_i
+                    # bil = Billing.first
+                    bil = Billing.find_by_uid(uid)
+                    if bil.nil?
+                        render json: {"error": "invalid transaction input"}, 
+                               status: 412
+                        return
+                    end
+                    
+                    if address.downcase != bil.payment_address.to_s.downcase
+                        render json: {"error": "invalid payment address"}, 
+                               status: 412
+                        return
+                    end
+
+                    if price < bil.offer_price
+                        render json: {"error": "not enough funds"}, 
+                               status: 412
+                        return
+                    end
+
+                    if ts > bil.valid_until.to_i
+                        bil.update_attributes(
+                            transaction_hash: tx,
+                            transaction_timestamp: Time.at(ts))
+                        render json: {"error": "offer expired"}, 
+                               status: 412
+                        return
+                    end
+
+                    # update billing record ===
                     bil.update_attributes(
+                        buyer_address: response.parsed_response["from"].to_s,
+                        payment_price: price,
+                        payment_timestamp: Time.now, 
                         transaction_hash: tx,
                         transaction_timestamp: Time.at(ts))
-                    render json: {"error": "offer expired"}, 
-                           status: 412
-                    return
+
+                    # create OAuth credentials ===
+                    oauth = Doorkeeper::Application.new( 
+                        name: bil.uid, 
+                        redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
+                        scopes: 'read')
+                    if !oauth.save
+                        render json: {"error": "creating oauth credentials failed"}, 
+                               status: 412
+                        return
+                    end
+
+                    # encrypt secret with pubkey ===
+                    encrypt_url = billing_service_url + "/api/encrypt"
+                    encrypt_body = {
+                        "email": bil.buyer.to_s,
+                        "pubkey-id": bil.buyer_pubkey_id.to_s,
+                        "message": Base64.strict_encode64(oauth.secret.to_s)
+                    }.stringify_keys
+                    response = HTTParty.post(encrypt_url, 
+                        headers: { 'Content-Type' => 'application/json' },
+                        body: encrypt_body.to_json)
+                    if response.code != 200
+                        render json: {"error": "encrypting oauth secret failed"}, 
+                               status: response.code
+                        return
+                    end
+                    oauth_secret = response.parsed_response["cipher"]
+
+                    retVal = {
+                        "key": oauth.uid.to_s,
+                        # "secret": oauth.secret.to_s
+                        "secret": oauth_secret.to_s
+                    }.stringify_keys
+
+                    render json: retVal.to_json, 
+                           status: 200
                 end
-
-                # update billing record ===
-                bil.update_attributes(
-                    buyer_address: response.parsed_response["from"].to_s,
-                    payment_price: price,
-                    payment_timestamp: Time.now, 
-                    transaction_hash: tx,
-                    transaction_timestamp: Time.at(ts))
-
-                # create OAuth credentials ===
-                oauth = Doorkeeper::Application.new( 
-                    name: bil.uid, 
-                    redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
-                    scopes: 'read')
-                if !oauth.save
-                    render json: {"error": "creating oauth credentials failed"}, 
-                           status: 412
-                    return
-                end
-
-                # encrypt secret with pubkey ===
-                encrypt_url = billing_service_url + "/api/encrypt"
-                encrypt_body = {
-                    "email": bil.buyer.to_s,
-                    "pubkey-id": bil.buyer_pubkey_id.to_s,
-                    "message": Base64.strict_encode64(oauth.secret.to_s)
-                }.stringify_keys
-                response = HTTParty.post(encrypt_url, 
-                    headers: { 'Content-Type' => 'application/json' },
-                    body: encrypt_body.to_json)
-                if response.code != 200
-                    render json: {"error": "encrypting oauth secret failed"}, 
-                           status: response.code
-                    return
-                end
-                oauth_secret = response.parsed_response["cipher"]
-
-                retVal = {
-                    "key": oauth.uid.to_s,
-                    # "secret": oauth.secret.to_s
-                    "secret": oauth_secret.to_s
-                }.stringify_keys
-
-                render json: retVal.to_json, 
-                       status: 200
             end
         end
     end

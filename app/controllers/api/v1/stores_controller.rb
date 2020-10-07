@@ -16,7 +16,7 @@ module Api
             def index # /api/data
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
                     billing = {
-                        "payment-info": payment_info,
+                        "payment-info": payment_info(params),
                         "payment-methods": payment_methods,
                         "provider": payment_seller_email.to_s,
                         "provider-pubkey-id": payment_seller_pubkey_id.to_s

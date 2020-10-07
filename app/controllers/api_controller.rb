@@ -40,7 +40,7 @@ class ApiController < ApplicationController
 						end
 					end
 				else
-					if action_name != "active" && action_name != "init" && !(controller_name == "receipts" && action_name == "show")
+					if action_name != "active" && action_name != "init" && !(controller_name == "receipts" && (action_name == "show" || action_name == "revoke"))
 						if action_name == "write"
 							doorkeeper_authorize! :write, :admin
 						else
@@ -49,7 +49,7 @@ class ApiController < ApplicationController
 					end
 				end
 			else
-				if action_name != "active" && action_name != "init" && !(controller_name == "receipts" && action_name == "show")
+				if action_name != "active" && action_name != "init" && !(controller_name == "receipts" && (action_name == "show" || action_name == "revoke"))
 					if action_name == "write"
 						doorkeeper_authorize! :write, :admin
 					else

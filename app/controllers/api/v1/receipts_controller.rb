@@ -116,7 +116,21 @@ module Api
                 # remove all items
                 item_ids = JSON.parse(@prov.scope)
                 item_ids.each do |item|
-                    Store.find(item).delete
+                    Store.where(id: item).delete_all
+                end
+
+                # recursively forward revocation
+                Log.where.not(receipt: nil).each do  |item|
+                    item_hash = JSON.parse(item.item)
+                    if item_hash["type"].to_s.starts_with?("read")
+                        ids = JSON.parse(item_hash["scope"])
+                        if !(item_ids & ids).empty?
+                            receipt = JSON.parse(item.receipt)
+                            response = HTTParty.delete(receipt["serviceEndpoint"].to_s + "/api/receipt/" + receipt["receipt"].to_s + "/revoke",
+                                            headers: { 'Content-Type'   => 'application/json' },
+                                            body:    { 'revocation_key': receipt["revocation_key"].to_s }.to_json)
+                        end
+                    end
                 end
 
                 # write Log
