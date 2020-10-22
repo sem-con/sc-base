@@ -1,0 +1,64 @@
+docker rm -f oca
+docker run --name oca -p 4000:3000 -d semcon/sc-base /bin/init.sh "$(< oca.trig)"
+
+echo '[{
+  "content": {
+    "first_name": "Christoph",
+    "last_name": "Fabianek",
+    "gender": "male"
+  },
+  "dri": "zQmbNDA8UVGsunvC43pekHs3hVtnFPWzPdizdwSqKVLAbWP",
+  "schema_dri": "gffA2i9tCexTwQ1S6JsXxJ8JEMHfTdaMtggBjX6jvF8N"
+}]' | curl -H "Content-Type: application/json" -d @- \
+    -X POST http://localhost:4000/api/data
+
+curl "http://localhost:4000/api/data/zQmbNDA8UVGsunvC43pekHs3hVtnFPWzPdizdwSqKVLAbWP?p=dri&f=plain"
+
+curl "http://localhost:4000/api/data/1?p=id&f=plain"
+
+curl "http://localhost:4000/api/data/2?p=id&f=plain"
+
+curl http://localhost:4000/api/data?f=plain
+
+curl "http://localhost:4000/api/data/zQmbNDA8UVGsunvC43pekHs3hVtnFPWzPdizdwSqKVLAbWP?p=dri&f=full"
+
+curl "http://localhost:4000/api/data/1?p=id&f=full"
+
+curl "http://localhost:4000/api/data/zQmbNDA8UVGsunvC43pekHs3hVtnFPWzPdizdwSqKVLAbWP?p=dri&f=validation"
+
+curl "http://localhost:4000/api/data/1?p=id&f=validation"
+
+curl "http://localhost:4000/api/data?f=validation"
+
+curl -s "http://localhost:4000/api/data?schema_dri=gffA2i9tCexTwQ1S6JsXxJ8JEMHfTdaMtggBjX6jvF8N&f=plain" | jq
+
+curl -s "http://localhost:4000/api/data?schema_dri=gffA2i9tCexTwQ1S6JsXxJ8JEMHfTdaMtggBjX6jvF8N&f=full" | jq
+
+curl -s "http://localhost:4000/api/data?schema_dri=gffA2i9tCexTwQ1S6JsXxJ8JEMHfTdaMtggBjX6jvF8N&f=validation" | jq
+
+curl -s "http://localhost:4000/api/data?f=plain"
+
+
+# update
+echo '[{
+  "content": {
+    "first_name": "Christoph",
+    "last_name": "Fabianek1",
+    "gender": "male"
+  },
+  "dri": "zQmbNDA8UVGsunvC43pekHs3hVtnFPWzPdizdwSqKVLAbWm"
+}]' | curl -H "Content-Type: application/json" -d @- \
+    -X PUT http://localhost:4000/api/data/1?p=id
+
+
+
+
+docker rm -f oca
+docker run --name oca -p 4000:3000 -e AUTH=true -d semcon/sc-base /bin/init.sh "$(< oca.trig)"
+
+APP_KEY=`docker logs oca | grep APP_KEY | awk -F " " '{print $NF}'`; \
+APP_SECRET=`docker logs oca | grep APP_SECRET | awk -F " " '{print $NF}'`; \
+export TOKEN=`curl -s -d grant_type=client_credentials \
+    -d client_id=$APP_KEY -d client_secret=$APP_SECRET \
+    -d scope=admin -X POST http://localhost:4000/oauth/token | \
+    jq -r '.access_token'`

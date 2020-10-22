@@ -13,6 +13,11 @@ if [ "$SEMCON_DB" == "external" ]
 then
 	cp config/database_pg.yml config/database.yml
 fi
+if [ "$SEMCON_DB" == "kubernetes" ]
+then
+	cp config/database_k8s.yml config/database.yml
+fi
+bundle exec rake db:create
 bundle exec rake db:migrate
 
 /usr/src/app/bin/rails server -b 0.0.0.0 &

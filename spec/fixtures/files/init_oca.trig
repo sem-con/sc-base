@@ -1,0 +1,131 @@
+@prefix : <http://w3id.org/semcon/ns/ontology#> .
+@prefix scr: <http://w3id.org/semcon/resource/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix w3c-format: <http://www.w3.org/ns/formats/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix svpr:  <http://www.specialprivacy.eu/vocabs/processing#> .
+@prefix svpu:  <http://www.specialprivacy.eu/vocabs/purposes#> .
+@prefix svd:   <http://www.specialprivacy.eu/vocabs/data#> .
+@prefix svdu:  <http://www.specialprivacy.eu/vocabs/duration#> .
+@prefix svl:   <http://www.specialprivacy.eu/vocabs/locations#> .
+@prefix svr:   <http://www.specialprivacy.eu/vocabs/recipients#> .
+@prefix spl:   <http://www.specialprivacy.eu/langs/usage-policy#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix spl: <http://www.specialprivacy.eu/langs/usage-policy#> .
+@prefix svd: <http://www.specialprivacy.eu/vocabs/data#> .
+@prefix svr: <http://www.specialprivacy.eu/vocabs/recipients#> .
+@prefix svpu: <http://www.specialprivacy.eu/vocabs/purposes#> .
+@prefix svpr: <http://www.specialprivacy.eu/vocabs/processing#> .
+@prefix svl: <http://www.specialprivacy.eu/vocabs/locations#> .
+@prefix svdu: <http://www.specialprivacy.eu/vocabs/duration#> .
+@prefix svd: <http://www.specialprivacy.eu/vocabs/data#> .
+@prefix scp: <http://w3id.org/semcon/ns/policy#> .
+
+#################################################################
+#    NAMED GRAPH ==> :BaseConfigurations
+#################################################################
+:BaseConfiguration {
+
+  :ContainerConfigurationInstance rdf:type :ContainerConfiguration ;
+    # generic - dublin core
+    dc:title "DIP Clinician" ;
+    dc:description """
+        Semantic Container hosting information for a lab that issues Verifiable Credentials
+      """ ;
+    
+#     dc:contributor [
+#       rdf:type foaf:Person ;
+#       foaf:name "John Doe" ;
+#       foaf:mbox <mailto:email@domain.org> ;
+#     ];
+    :hasDataConfiguration :DataConfigurationInstance .
+    # :hasDataLayer scr:LayerSemantic ;   # NON-EDITABLE - assigned
+
+  :DataConfigurationInstance rdf:type :DataConfiguration ;  
+    # :isDataModelExist true ;        # NON-EDITABLE - assigned
+    # :isDataConstraintExist true ;     # NON-EDITABLE - assigned
+    # :isDataMappingExist false ;     # NON-EDITABLE - assigned
+    # :isUsagePolicyExist true ;      # NON-EDITABLE - assigned
+    # data - classifications
+    :hasTag "" ;
+    # data format - inspired from void
+    :hasNativeSyntax <http://w3id.org/semcon/ns/ontology#JSON> ;
+    # example data in plain string
+    :hasExampleData """
+      
+      """ .     
+}
+
+#################################################################
+#    NAMED GRAPH ==> :UsagePolicies
+#################################################################
+:UsagePolicy {
+  <http://w3id.org/semcon/ns/ontology#ContainerPolicy> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://www.w3.org/2002/07/owl#equivalentClass> [
+    a <http://www.w3.org/2002/07/owl#Class>;
+    <http://www.w3.org/2002/07/owl#intersectionOf> ([
+    a <http://www.w3.org/2002/07/owl#Restriction>;
+    <http://www.w3.org/2002/07/owl#onProperty> <http://www.specialprivacy.eu/langs/usage-policy#hasData>;
+    <http://www.w3.org/2002/07/owl#someValuesFrom> [<http://www.w3.org/2002/07/owl#unionOf> (<http://www.specialprivacy.eu/vocabs/data#Profile>)]
+    ] [
+    a <http://www.w3.org/2002/07/owl#Restriction>;
+    <http://www.w3.org/2002/07/owl#onProperty> <http://www.specialprivacy.eu/langs/usage-policy#hasRecipient>;
+    <http://www.w3.org/2002/07/owl#someValuesFrom> [<http://www.w3.org/2002/07/owl#unionOf> (<http://www.specialprivacy.eu/vocabs/recipients#Ours>)]
+    ] [
+    a <http://www.w3.org/2002/07/owl#Restriction>;
+    <http://www.w3.org/2002/07/owl#onProperty> <http://www.specialprivacy.eu/langs/usage-policy#hasPurpose>;
+    <http://www.w3.org/2002/07/owl#someValuesFrom> [<http://www.w3.org/2002/07/owl#unionOf> (<http://www.specialprivacy.eu/vocabs/purposes#Health>)]
+    ] [
+    a <http://www.w3.org/2002/07/owl#Restriction>;
+    <http://www.w3.org/2002/07/owl#onProperty> <http://www.specialprivacy.eu/langs/usage-policy#hasProcessing>;
+    <http://www.w3.org/2002/07/owl#someValuesFrom> [<http://www.w3.org/2002/07/owl#unionOf> (<http://www.specialprivacy.eu/vocabs/processing#Aggregate> <http://www.specialprivacy.eu/vocabs/processing#Analyze> <http://www.specialprivacy.eu/vocabs/processing#Collect> <http://www.specialprivacy.eu/vocabs/processing#Copy> <http://www.specialprivacy.eu/vocabs/processing#Move> <http://www.specialprivacy.eu/vocabs/processing#Query> <http://www.specialprivacy.eu/vocabs/processing#Transfer>)]
+    ] [
+    a <http://www.w3.org/2002/07/owl#Restriction>;
+    <http://www.w3.org/2002/07/owl#onProperty> <http://www.specialprivacy.eu/langs/usage-policy#hasStorage>;
+    <http://www.w3.org/2002/07/owl#someValuesFrom> [<http://www.w3.org/2002/07/owl#intersectionOf> ([
+    a <http://www.w3.org/2002/07/owl#Restriction>;
+    <http://www.w3.org/2002/07/owl#onProperty> <http://www.specialprivacy.eu/langs/usage-policy#hasLocation>;
+    <http://www.w3.org/2002/07/owl#someValuesFrom> [<http://www.w3.org/2002/07/owl#unionOf> (<http://www.specialprivacy.eu/vocabs/locations#EU>)]
+    ] [
+    a <http://www.w3.org/2002/07/owl#Restriction>;
+    <http://www.w3.org/2002/07/owl#onProperty> <http://www.specialprivacy.eu/langs/usage-policy#hasDuration>;
+    <http://www.w3.org/2002/07/owl#someValuesFrom> <http://www.specialprivacy.eu/vocabs/duration#LegalRequirement>
+    ])]
+    ])
+    ] .
+}
+
+#################################################################
+#    NAMED GRAPH ==> :DataModels
+#################################################################
+:DataModel {
+  
+}
+
+#################################################################
+#    NAMED GRAPH ==> :DataConstraints
+#################################################################
+:DataConstraint {
+  
+}
+
+#################################################################
+#    NAMED GRAPH ==> :DataMappings (Future)
+#################################################################
+:DataMapping {
+
+}
+
+#################################################################
+#    NAMED GRAPH ==> :UserFunctions - Hydra function definitions (Future)
+#################################################################
+:UserFunction {
+
+}

@@ -6,6 +6,7 @@ module Api
             include DataAccessHelper
             include ProvenanceHelper
             include PaymentHelper
+            # include PayPal::SDK::REST
 
             # respond only to JSON requests
             respond_to :json
@@ -212,12 +213,89 @@ module Api
 
                     # validate signature
                     # request to srv-eidas for verification of params["buyer-signature"]
+                    sig_validation_url = ENV["EIDAS_URL"] + "/api/verify"
+                    sig_string = '<?xml version="1.0" encoding="UTF-8"?><sl:VerifyCMSSignatureRequest xmlns:sl="http://www.buergerkarte.at/namespaces/securitylayer/1.2#"><sl:CMSSignature>'
+                    sig_string += params["buyer-signature"].to_s
+                    sig_string += '</sl:CMSSignature></sl:VerifyCMSSignatureRequest>'
+                    sig_string = CGI.escape sig_string
+                    retVal = HTTParty.post(sig_validation_url, 
+                        headers: { 'Content-Type' => 'application/json' },
+                        body: {"value": sig_string}.to_json)
+                    if retVal.code == 200
+                        buyer_info = retVal.parsed_response["VerifyCMSSignatureResponse"]["SignerInfo"]["X509Data"]["X509SubjectName"] rescue ""
+                        if buyer_info == ""
+                            render json: {"error": "missing buyer information"},
+                                   status: 500
+                            return
+                        end
+                    else
+                        render json: {"error": "invalid signature"},
+                               status: 500
+                        return
+                    end
 
                     # validate PayPal ID with params["payment-id"]
-                    # curl -v -X GET https://api.sandbox.paypal.com/v2/checkout/orders/1TN16339HG9468033 -H "Content-Type: application/json" -H "Authorization: Bearer A21AAL0P00YjxPWgdyQGnew4NX0i0zrrFUdXbxJtoNPwOXj1Uc775zIOJbkHO3oqBvBTIRKV4PZi4ZoOSqmmIwwrw6mhmd0zA"
-
+                    token = PayPal::SDK::REST.set_config(
+                        mode: ENV['PAYPAL_ENV'], 
+                        client_id: ENV['PAYPAL_CLIENT_ID'], 
+                        client_secret: ENV['PAYPAL_CLIENT_SECRET'], 
+                        ssl_options: { ca_file: nil }).token
+                    order_id = JSON.parse(params["payment-info"])["id"].to_s rescue ""
+                    bil_validation_url = "https://api.sandbox.paypal.com/v2/checkout/orders/"
+                    retVal = HTTParty.get(
+                        bil_validation_url + order_id,
+                        headers: { 'Content-Type' => 'application/json', 'Authorization' => 'Bearer ' + token})
+                    if retVal.code == 200
+                        if retVal.parsed_response["status"] != "COMPLETED"
+                            render json: {"error": "invalid PayPal status"},
+                                   status: 500
+                            return
+                        end
+                    else
+                        render json: {"error": "invalid PayPal Order ID"},
+                               status: 500
+                        return
+                    end
+                    address_info = retVal.parsed_response["purchase_units"].first["shipping"]["address"].to_json
+                    payment_price = retVal.parsed_response["purchase_units"].first["payments"]["captures"].first["amount"]["value"].to_f rescue nil
+                    payment_timestamp = retVal.parsed_response["update_time"].to_s rescue nil
+                    transaction_timestamp = retVal.parsed_response["create_time"].to_s rescue nil
 
                     # create Billing record ===
+                    @bil = Billing.find_by_uid(params["uid"].to_s)
+                    if @bil.nil?
+                        bil = Billing.new(
+                            uid: params["uid"].to_s,
+                            buyer: params["buyer"].to_s,
+                            buyer_info: buyer_info,
+                            buyer_signature: params["buyer-signature"].to_s,
+                            buyer_pubkey_id: nil,
+                            buyer_address: address_info,
+                            offer_info: nil,
+                            offer_price: params["cost"].to_f,
+                            offer_timestamp: transaction_timestamp,
+                            offer_info: params["records"].to_s +  " records",
+                            valid_until: params["valid-until"].to_s,
+                            payment_address: nil,
+                            payment_method: "PayPal",
+                            payment_price: payment_price,
+                            payment_timestamp: payment_timestamp,
+                            address_path: nil,
+                            request: params["request"].to_json,
+                            seller: "ZAMG",
+                            seller_pubkey_id: nil,
+                            transaction_hash: order_id.to_s,
+                            transaction_timestamp: Time.now,
+                            usage_policy: params["usage-policy"].to_s)
+                        if !bil.save
+                            render json: {"error": "saving payment request failed"}, 
+                                   status: 500
+                            return
+                        end
+                    else
+                        @bil.update_attributes(
+                            transaction_timestamp: Time.now)
+                    end
 
                     # return data  ===
                     retVal = getData(params["request"])

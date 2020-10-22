@@ -85,7 +85,13 @@ module Api
                                status: 200
                     end
                 end
-            end             
+            end
+
+            def schema
+                schemas = Store.where.not(schema_dri: nil).pluck(:schema_dri).uniq rescue []
+                render json: schemas,
+                       status: 200
+            end
 
             def create
                 input_raw = params.to_json

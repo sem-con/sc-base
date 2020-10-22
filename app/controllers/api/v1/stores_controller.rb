@@ -33,30 +33,8 @@ module Api
                     }.stringify_keys
                     provision_hash = Digest::SHA256.hexdigest(billing.to_json + ", " + provision.to_json)
                 else
-                    provision = get_provision(params, "read")
+                    provision = get_provision(params, "read " + params.to_json)
                     provision_hash = Digest::SHA256.hexdigest(provision.to_json)
-                end
-
-                response_error = false
-                response = nil
-                begin
-                    response = HTTParty.post("https://blockchain.ownyourdata.eu/api/doc?hash=" + provision_hash.to_s)
-                rescue => ex
-                    response_error = true
-                    puts "Error: " +  ex.inspect.to_s
-                end
-
-                dlt_reference = ""
-                if !response_error && response.code.to_s == "200"
-                    if response.parsed_response["address"] == ""
-                        dlt_reference = "https://notary.ownyourdata.eu/en?hash=" + provision_hash.to_s
-                    else
-                        dlt_reference = {
-                            "dlt": "Ethereum",
-                            "address": response.parsed_response["address"],
-                            "audit-proof": response.parsed_response["audit-proof"]
-                        }.stringify_keys
-                    end
                 end
 
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
@@ -69,13 +47,96 @@ module Api
                         }
                     }.stringify_keys
                 else
-                    retVal = {
-                        "provision": provision,
-                        "validation": {
-                            "hash": provision_hash,
-                            "dlt-reference": dlt_reference
-                        }
-                    }.stringify_keys
+                    if params[:id].to_s != "" && params[:p].to_s == ""
+                        render json: { "error": "missing paramter specification (p=id|dri)"},
+                               status: 422
+                        return
+                    end
+
+                    if params[:f].to_s == "plain"
+                        if params[:p].to_s == ""
+                            retVal = []
+                            provision["data"].each{ |el| retVal << el["content"] }
+                        else
+                            if provision == []
+                                retVal = {}
+                            else
+                                retVal = provision["content"]
+                            end
+                        end
+
+                    elsif params[:f].to_s == "meta"
+                        if params[:p].to_s == ""
+                            retVal = []
+                            provision["data"].each{ |el| retVal << el.except("content", "usage-policy", "provenance") }
+                        else
+                            if provision == []
+                                retVal = {}
+                            else
+                                retVal = provision.except("content", "usage-policy", "provenance")
+                            end
+                        end
+
+                    elsif params[:f].to_s == "validation"
+                        if params[:p].to_s == ""
+                            retVal = {"data": provision["data"]}.stringify_keys
+                        else
+                            retVal = provision
+                        end
+
+                        response_error = false
+                        response = nil
+                        begin
+                            response = HTTParty.post("https://blockchain.ownyourdata.eu/api/doc?hash=" + provision_hash.to_s)
+                        rescue => ex
+                            response_error = true
+                            puts "Error: " +  ex.inspect.to_s
+                        end
+
+                        dlt_reference = ""
+                        if !response_error && response.code.to_s == "200"
+                            if response.parsed_response["address"] == ""
+                                dlt_reference = "https://notary.ownyourdata.eu/en?hash=" + provision_hash.to_s
+                            else
+                                dlt_reference = {
+                                    "dlt": "Ethereum",
+                                    "address": response.parsed_response["address"],
+                                    "audit-proof": response.parsed_response["audit-proof"]
+                                }.stringify_keys
+                            end
+                        end
+
+                        retVal = {
+                            "provision": provision,
+                            "validation": {
+                                "hash": provision_hash,
+                                "dlt-reference": dlt_reference
+                            }
+                        }.stringify_keys
+
+                    else # format=full
+                        if provision == [] || provision == ""
+                            if params[:p].to_s == ""
+                                retVal = provision
+                            else 
+                                if provision == []
+                                    retVal = {}
+                                else
+                                    retVal = provision
+                                end
+                            end
+                        else
+                            if params[:p].to_s == ""
+                                retVal = {"data": provision["data"]}.stringify_keys
+                            else
+                                retVal = provision
+                            end
+                            if provision["usage-policy"].to_s != ""
+                                retVal["usage-policy"] = provision["usage-policy"]
+                            end
+                            retVal["provenance"] = provision["provenance"]
+                        end
+                    end
                 end
 
                 render json: retVal.to_json, 
@@ -86,7 +147,7 @@ module Api
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
                     billing = {
                         "payment-info": payment_info,
-                        "methods": ["Ether"],
+                        "methods": ["Ether", "PayPal"],
                         "provider": payment_seller_email.to_s,
                         "provider-pubkey-id": payment_seller_pubkey_id.to_s
                     }.stringify_keys
@@ -95,6 +156,10 @@ module Api
                     retVal_type = container_format
                     if (params[:id].to_i.to_s == params[:id].to_s)
                         retVal_data = getData("id=" + params[:id].to_s)
+                    elsif (params["dri"].to_s != "")
+                        retVal_data = getData("dri=" + params["dri"].to_s)
+                    elsif (params["schema_dri"].to_s != "")
+                        retVal_data = getData("schema_dri=" + params["schema_dri"].to_s)
                     elsif !(Date.parse(params[:id].to_s) rescue nil).nil?
                         retVal_data = getData("day=" + params[:id].to_s)
                     else
@@ -428,6 +493,35 @@ module Api
                  
                 writeData(content, input, provenance, read_hash)
 
+            end
+
+            def delete
+                if params[:p].to_s == "id"
+                    @item = Store.find(params[:id]) rescue nil
+                elsif params[:p].to_s == "dri"
+                    @item = Store.find(params[:dri]) rescue nil
+                else
+                    render json: { "error": "invalid paramenter" },
+                           status: 422
+                    return
+                end
+
+                if @item.nil?
+                    render json: { "error": "not found" },
+                           status: 404
+                    return
+                end                    
+                retVal = { "id": @item.id }.stringify_keys
+                if @item.dri.to_s != ""
+                    retVal["dri"] = @item.dri.to_s
+                end
+                @item.delete
+                createLog({
+                    "type": "delete",
+                    "scope": "id: " + retVal["id"].to_s})
+
+                render json: retVal,
+                       status: 200
             end
         end
     end
