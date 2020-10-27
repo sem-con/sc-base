@@ -27,6 +27,7 @@ Rails.application.routes.draw do
 			match 'data/:id',           to: 'stores#index',           via: 'get'
 			match 'data',               to: 'stores#write',           via: 'post'
 			match 'data/:id',           to: 'stores#write',           via: 'put'
+			match 'data/:id',           to: 'stores#delete',          via: 'delete'
 			match 'info',               to: 'infos#index',            via: 'get'
 			match 'log',                to: 'logs#index',             via: 'get'
     

@@ -12,6 +12,7 @@ module Api
             def active
                 render json: { "active": true,
                                "auth": ENV["AUTH"].to_s != "",
+                               "repos": false,
                                "watermark":  ENV["WATERMARK"].to_s != "",
                                "billing": ENV["AUTH"].to_s == "billing"
                              }.to_json,

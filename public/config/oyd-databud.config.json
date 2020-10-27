@@ -1,0 +1,9 @@
+{
+  "endpoint": {
+    "url": null,
+    "credentials": {
+      "appKey": null,
+      "appSecret": null
+    }
+  }
+}

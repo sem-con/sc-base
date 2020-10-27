@@ -496,10 +496,10 @@ module Api
             end
 
             def delete
-                if params[:p].to_s == "id"
-                    @item = Store.find(params[:id]) rescue nil
-                elsif params[:p].to_s == "dri"
-                    @item = Store.find(params[:dri]) rescue nil
+                if params["p"].to_s == "id"
+                    @item = Store.find(params["id"]) rescue nil
+                elsif params["p"].to_s == "dri"
+                    @item = Store.find_by_dri(params["id"]) rescue nil
                 else
                     render json: { "error": "invalid paramenter" },
                            status: 422
