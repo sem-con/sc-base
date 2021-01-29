@@ -107,7 +107,7 @@ module Api
                     return
                 end
 
-                if @prov.revocation_key != params["revocation_key"].to_s
+                if @prov.revocation_key != params["revocationKey"].to_s
                     render json: {"error": "invalid revocation key"},
                            status: 403
                     return
@@ -128,7 +128,7 @@ module Api
                             receipt = JSON.parse(item.receipt)
                             response = HTTParty.delete(receipt["serviceEndpoint"].to_s + "/api/receipt/" + receipt["receipt"].to_s + "/revoke",
                                             headers: { 'Content-Type'   => 'application/json' },
-                                            body:    { 'revocation_key': receipt["revocation_key"].to_s }.to_json)
+                                            body:    { 'revocationKey': receipt["revocation_key"].to_s }.to_json)
                         end
                     end
                 end

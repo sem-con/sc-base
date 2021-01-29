@@ -14,7 +14,8 @@ module Api
                                "auth": ENV["AUTH"].to_s != "",
                                "repos": false,
                                "watermark":  ENV["WATERMARK"].to_s != "",
-                               "billing": ENV["AUTH"].to_s == "billing"
+                               "billing": ENV["AUTH"].to_s == "billing",
+                               "scopes": ["admin", "write", "read"]
                              }.to_json,
                        status: 200
             end

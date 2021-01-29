@@ -1,0 +1,955 @@
+openapi: 3.0.1
+info:
+  title: Semantic Container API
+  description: >-
+    Semantic Containers enable the secure and traceable exchange of defined data
+    on specified usage conditions between multiple parties.
+     
+     Further information:
+     - learn more about Semantic Containers at https://www.ownyourdata.eu/semcon
+     - view other [OwnYourData Service API's](https://api-docs.ownyourdata.eu)
+  contact:
+    email: office@ownyourdata.eu
+  license:
+    name: MIT License
+    url: 'https://opensource.org/licenses/MIT'
+  version: v1
+servers:
+  - url: /
+security:
+  - BearerAuth: []
+paths:
+  /oauth/token:
+    post:
+      summary: request token
+      tags:
+        - Authorization
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestTokenBody'
+      responses:
+        '200':
+          description: Return token object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestBody'
+        '401':
+          description: invalid
+  /oauth/token/info:
+    get:
+      summary: show token information
+      tags:
+        - Authorization
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenInfoResponse'
+        '401':
+          description: Not authorized
+  /oauth/revoke:
+    post:
+      summary: revoke token
+      tags:
+        - Authorization
+      requestBody:
+        $ref: '#/components/requestBodies/Input'
+      responses:
+        '200':
+          description: success
+        '404':
+          description: not found
+  /oauth/applications:
+    post:
+      tags:
+        - Authorization
+      summary: create access account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - name
+                - scopes
+              type: object
+              properties:
+                name:
+                  type: string
+                scopes:
+                  type: string
+        required: false
+      responses:
+        '200':
+          description: success
+          content: {}
+        '401':
+          description: invalid token
+          content: {}
+      x-codegen-request-body-name: input
+  '/oauth/applications/{id}':
+    delete:
+      tags:
+        - Authorization
+      summary: remove account
+      parameters:
+        - name: id
+          in: path
+          description: '''id'' of account'
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+          content: {}
+        '401':
+          description: invalid token
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  /api/active:
+    get:
+      tags:
+        - Container information
+      security: []
+      summary: check if container is active
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active:
+                    type: boolean
+                  auth:
+                    type: boolean
+                    default: false
+                  repos:
+                    type: boolean
+                    default: false
+                  watermark:
+                    type: boolean
+                    default: false
+                  billing:
+                    type: boolean
+                    default: false
+                  scopes:
+                    type: array
+                    items:
+                      type: string
+                    default:
+                      - admin
+                      - write
+                      - read
+  /api/info:
+    get:
+      tags:
+        - Container information
+      summary: container overview
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                required:
+                  - records
+                type: object
+                properties:
+                  uid:
+                    type: string
+                  title:
+                    type: string
+                  image:
+                    type: string
+                  records:
+                    type: integer
+  '/api/data/{val}':
+    get:
+      summary: read specific record
+      tags:
+        - Read/Write Data
+      parameters:
+        - name: val
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: p
+          description: parameter type (is val and id or DRI)
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - id
+              - dri
+        - name: f
+          description: output format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - plain
+              - full
+              - meta
+              - validation
+            default: full
+      responses:
+        '200':
+          description: Return raw data
+        '403':
+          description: Permission denied
+    put:
+      summary: updated specific record
+      tags:
+        - Read/Write Data
+      parameters:
+        - name: val
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: p
+          description: parameter type (is val and id or DRI)
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - id
+              - dri
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataBody'
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+        '403':
+          description: Permission denied
+  /api/data:
+    get:
+      summary: read specific records
+      tags:
+        - Read/Write Data
+      parameters:
+        - name: schema_dri
+          in: query
+          description: >-
+            DRI (Decentralized Resource Identifier) of the OCA schema base
+            describing the data
+          schema:
+            type: string
+        - name: table
+          in: query
+          description: all records with specified table name
+          schema:
+            type: string
+        - name: f
+          description: output format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - plain
+              - full
+              - meta
+              - validation
+            default: full
+      responses:
+        '200':
+          description: 'Return raw data, or an array of raw data'
+        '403':
+          description: Permission denied
+    post:
+      summary: Store data
+      tags:
+        - Read/Write Data
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataBody'
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                properties:
+                  id:
+                    type: integer
+        '403':
+          description: Permission denied
+    delete:
+      summary: delete specific record
+      tags:
+        - Read/Write Data
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: Identifier of the item
+          schema:
+            type: string
+        - name: dri
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+        '403':
+          description: Permission denied
+  /api/log:
+    get:
+      tags:
+        - Container information
+      summary: log information
+      responses:
+        '200':
+          description: success
+          content: {}
+  /api/receipts:
+    get:
+      tags:
+        - Data receipt
+      summary: get all receipts for container
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                type: string
+                items:
+                  type: integer
+  '/api/receipt/{id}':
+    get:
+      tags:
+        - Data receipt
+      summary: retrieve information for specified receipt (including record IDs)
+      parameters:
+        - name: id
+          in: path
+          description: hash value provided by write operation
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  '/api/receipt/{ttl}/{id}':
+    get:
+      tags:
+        - Data receipt
+      summary: >-
+        retrieve complete information for specified receipt with maximum
+        recursion level defined in ttl (time-to-live)
+      parameters:
+        - name: ttl
+          in: path
+          description: recursion level to query subsequent containers
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: hash value provided by write operation
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  '/api/receipt/{id}/revoke':
+    delete:
+      tags:
+        - Data receipt
+      summary: revoke all records for specified receipt
+      parameters:
+        - name: id
+          in: path
+          description: hash value provided by write operation
+          required: true
+          schema:
+            type: string
+        - name: revocation_key
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+      x-codegen-request-body-name: input
+  '/api/rcpt/{id}':
+    get:
+      tags:
+        - Data receipt
+      summary: >-
+        retrieve abbreviated information for specified receipt (without record
+        IDs)
+      parameters:
+        - name: id
+          in: path
+          description: hash value provided by write operation
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  '/api/rcpt/{ttl}/{id}':
+    get:
+      tags:
+        - Data receipt
+      summary: >-
+        retrieve abbreviated information for specified receipt with maximum
+        recursion level defined in ttl (time-to-live)
+      parameters:
+        - name: ttl
+          in: path
+          description: recursion level to query subsequent containers
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: hash value provided by write operation
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  '/api/receipt/{hash}':
+    post:
+      tags:
+        - Data receipt
+      summary: store receipt data for write request
+      parameters:
+        - name: hash
+          in: path
+          description: hash value of retrieved data
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: receipt JSON provided by write operation
+        content:
+          application/json: {}
+        required: false
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+      x-codegen-request-body-name: input
+  /api/meta:
+    get:
+      tags:
+        - Semantic information
+      summary: detailed container information
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+    post:
+      tags:
+        - Semantic information
+      summary: set container information
+      requestBody:
+        content:
+          application/json: {}
+        required: false
+      responses:
+        '200':
+          description: success
+          content: {}
+        '422':
+          description: invalid
+          content: {}
+      x-codegen-request-body-name: input
+  '/api/meta/{detail}':
+    get:
+      tags:
+        - Semantic information
+      summary: specific container information
+      parameters:
+        - name: detail
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - info
+              - usage
+              - example
+              - schemas
+              - tables
+          description: >-
+            'info' for general information, 
+            'usage' for data usage policy,
+            'example' for examplary input data,
+            'schemas' returns an array of all used Schema Base DRIs (OCA),
+            'tables' returns an array of all used table names (default for empty values)
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  /api/buy:
+    post:
+      tags:
+        - Billing
+      summary: buy data
+      requestBody:
+        content:
+          application/json: {}
+        required: false
+      responses:
+        '200':
+          description: success
+          content:
+            '*/*':
+              schema:
+                type: object
+      x-codegen-request-body-name: input
+  /api/paid:
+    get:
+      tags:
+        - Billing
+      summary: confirm payment
+      parameters:
+        - name: tx
+          description: transaction_hash
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                required:
+                  - key
+                  - secret
+                type: object
+                properties:
+                  key:
+                    type: string
+                  secret:
+                    type: string
+  /api/payments:
+    get:
+      tags:
+        - Billing
+      summary: list all payments
+      responses:
+        '200':
+          description: success
+          content: {}
+  /api/data/full:
+    get:
+      tags:
+        - Data access
+      summary: read data with all available attributes
+      responses:
+        '200':
+          description: success
+          content: {}
+  /api/data/provision:
+    get:
+      tags:
+        - Data access
+      summary: read data with usage policy and provenance information
+      responses:
+        '200':
+          description: success
+          content: {}
+  '/api/data/fragment/{id}':
+    get:
+      tags:
+        - Watermarking
+      summary: apply watermarking to data
+      parameters:
+        - name: id
+          in: path
+          description: identification ('id') for watermarked data fragment
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  '/api/watermark/account/{account_id}':
+    get:
+      tags:
+        - Watermarking
+      summary: get watermarked data for given account
+      parameters:
+        - name: account_id
+          in: path
+          description: identification for account within container (requires key & secret)
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  '/api/watermark/account/{account_id}/fragment/{fragment_id}':
+    get:
+      tags:
+        - Watermarking
+      summary: get specified watermarked data fragment for given account
+      parameters:
+        - name: account_id
+          in: path
+          description: identification for account within container (requires key & secret)
+          required: true
+          schema:
+            type: integer
+        - name: fragment_id
+          in: path
+          description: identification ('id') for watermarked data fragment
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+    post:
+      tags:
+        - Watermarking
+      summary: >-
+        get distance and similarity for given account, fragment_id, and provided
+        dataset
+      parameters:
+        - name: account_id
+          in: path
+          description: identification for account within container (requires key & secret)
+          required: true
+          schema:
+            type: integer
+        - name: fragment_id
+          in: path
+          description: identification ('id') for watermarked data fragment
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json: {}
+        required: false
+      responses:
+        '200':
+          description: success
+          content: {}
+        '422':
+          description: invalid format
+          content: {}
+        '500':
+          description: error
+          content: {}
+      x-codegen-request-body-name: input
+  '/api/watermark/account/{account_id}/fragment/{fragment_id}/error':
+    get:
+      tags:
+        - Watermarking
+      summary: >-
+        get error vector for specified watermarked data fragment and given
+        account
+      parameters:
+        - name: account_id
+          in: path
+          description: identification for account within container (requires key & secret)
+          required: true
+          schema:
+            type: integer
+        - name: fragment_id
+          in: path
+          description: identification ('id') for watermarked data fragment
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  '/api/watermark/account/{account_id}/fragment/{fragment_id}/kpi/{kpi}':
+    get:
+      tags:
+        - Watermarking
+      summary: get KPIs for specified watermarked data fragment and given account
+      parameters:
+        - name: account_id
+          in: path
+          description: identification for account within container (requires key & secret)
+          required: true
+          schema:
+            type: integer
+        - name: fragment_id
+          in: path
+          description: identification ('id') for watermarked data fragment
+          required: true
+          schema:
+            type: integer
+        - name: kpi
+          in: path
+          description: '''mean'' for arithmetic mean and ''stdv'' for standard deviation'
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  '/api/watermark/error/{key}':
+    get:
+      tags:
+        - Watermarking
+      summary: get error vector of length 100 for specified key
+      parameters:
+        - name: key
+          in: path
+          description: numerical input (seed) that generates random error vector
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  '/api/watermark/error/{key}/{len}':
+    get:
+      tags:
+        - Watermarking
+      summary: get error vector of length "len" for specified key
+      parameters:
+        - name: key
+          in: path
+          description: numerical input (seed) that generates random error vector
+          required: true
+          schema:
+            type: integer
+        - name: len
+          in: path
+          description: define length of error vector
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  /api/watermark/fragments:
+    get:
+      tags:
+        - Watermarking
+      summary: 'get list of fragment identifiers, associated keys, and account_id'
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  '/api/watermark/fragment/{fragment_id}':
+    get:
+      tags:
+        - Watermarking
+      summary: get specified (not watermarked) data fragment
+      parameters:
+        - name: fragment_id
+          in: path
+          description: identification ('id') for watermarked data fragment
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+          content: {}
+        '404':
+          description: not found
+          content: {}
+  /api/watermark/identify:
+    post:
+      tags:
+        - Watermarking
+      summary: get descending sorted list of fragment identifiers for provided dataset
+      requestBody:
+        content:
+          application/json: {}
+        required: false
+      responses:
+        '200':
+          description: success
+          content: {}
+        '422':
+          description: invalid format
+          content: {}
+        '500':
+          description: error
+          content: {}
+      x-codegen-request-body-name: input
+components:
+  schemas:
+    BadRequestBody:
+      properties:
+        status:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: Bad request
+      required:
+        - status
+        - error
+    RequestTokenBody:
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        grant_type:
+          type: string
+          enum:
+            - client_credentials
+            - password
+      required:
+        - client_id
+        - client_secret
+        - grant_type
+    TokenResponse:
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+        created_at:
+          type: integer
+        username:
+          type: string
+    TokenInfoResponse:
+      properties:
+        resource_owner_id:
+          type: string
+        scope:
+          type: array
+          items:
+            type: string
+        expires_in:
+          type: integer
+        application:
+          type: object
+          properties:
+            uid:
+              type: string
+        created_at:
+          type: integer
+    DataBody:
+      properties:
+        content:
+          description: Key value json file representing data from schema base
+          type: object
+        dri:
+          type: string
+        schema_dri:
+          type: string
+        mime_type:
+          type: string
+          example: application/json
+        table_name:
+          type: string
+          description: tag to group records (mimics repo functionality of Data Vault)
+  requestBodies:
+    Input:
+      content:
+        application/json:
+          schema: {}
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

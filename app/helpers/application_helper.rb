@@ -49,7 +49,7 @@ module ApplicationHelper
             if uc.nil?
                 nil
             else
-                uc.dump(:trig).to_s
+                uc.dump(:trig).to_s.strip.split("\n")[1..-2].join("\n")
             end
         else 
             nil

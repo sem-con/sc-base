@@ -7,11 +7,14 @@ module Api
             include PolicyMatchHelper
             include ProvenanceHelper
             include PaymentHelper
+            include Pagy::Backend
 
             # respond only to JSON requests
             respond_to :json
             respond_to :html, only: []
             respond_to :xml, only: []
+
+            after_action { pagy_headers_merge(@pagy) if @pagy }
 
             def index # /api/data
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
@@ -32,12 +35,7 @@ module Api
                         "provenance": getProvenance(billing_hash, param_str, timeStart, timeEnd)
                     }.stringify_keys
                     provision_hash = Digest::SHA256.hexdigest(billing.to_json + ", " + provision.to_json)
-                else
-                    provision = get_provision(params, "read " + params.to_json)
-                    provision_hash = Digest::SHA256.hexdigest(provision.to_json)
-                end
 
-                if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
                     retVal = {
                         "billing": billing,
                         "provision": provision,
@@ -52,6 +50,9 @@ module Api
                                status: 422
                         return
                     end
+
+                    @pagy, provision = getProvision(params, "read " + params.to_json)
+                    provision_hash = Digest::SHA256.hexdigest(provision.to_json)
 
                     if params[:f].to_s == "plain"
                         if params[:p].to_s == ""
@@ -143,7 +144,7 @@ module Api
                        status: 200
             end
 
-            def show
+            def show_deprecated  # remove after Feb 2021
                 if ENV["AUTH"].to_s.downcase == "billing" && !valid_doorkeeper_token?
                     billing = {
                         "payment-info": payment_info,
@@ -376,7 +377,7 @@ module Api
                 read_hash = ""
                 usage_policy = ""
                 content = []
-                if input.class == Hash
+                if JSON.parse(input.to_json).class == Hash
                     if !input["provision"].nil?
                         # has top-level "provision" attributes
                         content = input["provision"]["content"] rescue ""
@@ -399,6 +400,9 @@ module Api
                 else
                     content = input
                     read_hash = Digest::SHA256.hexdigest(input.to_json)
+                end
+                if read_hash == ""
+                    read_hash = Digest::SHA256.hexdigest(content.to_json)
                 end
 
                 cf = container_format
@@ -490,7 +494,7 @@ module Api
                            status: 412
                     return
                 end
-                 
+
                 writeData(content, input, provenance, read_hash)
 
             end

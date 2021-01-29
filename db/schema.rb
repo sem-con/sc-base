@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_10_07_123807) do
+ActiveRecord::Schema.define(version: 2020_12_17_162712) do
 
   create_table "async_processes", force: :cascade do |t|
     t.string "rid"
@@ -143,8 +143,10 @@ ActiveRecord::Schema.define(version: 2020_10_07_123807) do
     t.string "dri"
     t.string "schema_dri"
     t.string "mime_type"
+    t.string "table_name"
     t.index ["dri"], name: "index_stores_on_dri"
     t.index ["schema_dri"], name: "index_stores_on_schema_dri"
+    t.index ["table_name"], name: "index_stores_on_table_name"
   end
 
   create_table "watermarks", force: :cascade do |t|

@@ -20,13 +20,11 @@ gem 'rdf'
 gem 'rdf-trig'
 gem 'delayed_job_active_record'
 gem 'paypal-sdk-rest'
+gem 'pagy', '~> 3.5'
+gem 'hashlink'
 
 # update for security fixes
 gem 'loofah', '~> 2.3', '>= 2.3.1'
-
-# for vue.js
-# gem 'webpacker', '~> 4.2', '>= 4.2.2'
-# gem 'bootsnap', '>= 1.1.0', require: false
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console

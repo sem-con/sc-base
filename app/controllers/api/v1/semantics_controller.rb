@@ -93,6 +93,17 @@ module Api
                        status: 200
             end
 
+            def table
+                tables = Store.all.pluck(:table_name).uniq rescue []
+                if tables.compact != tables
+                    tables = tables.compact
+                    tables << "default"
+                    tables = tables.uniq
+                end
+                render json: tables,
+                       status: 200
+            end
+
             def create
                 input_raw = params.to_json
                 if Semantic.count == 0 or Semantic.first.validation.to_s == ""

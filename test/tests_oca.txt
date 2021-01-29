@@ -8,7 +8,40 @@ echo '[{
     "gender": "male"
   },
   "dri": "zQmbNDA8UVGsunvC43pekHs3hVtnFPWzPdizdwSqKVLAbWP",
+  "schema_dri": "gffA2i9tCexTwQ1S6JsXxJ8JEMHfTdaMtggBjX6jvF8N",
+  "table_name": "contacts"
+}]' | curl -H "Content-Type: application/json" -d @- \
+    -X POST http://localhost:4000/api/data
+
+echo '{
+  "content": {
+    "first_name": "Christoph",
+    "last_name": "Fabianek",
+    "gender": "male"
+  },
+  "dri": "zQmbNDA8UVGsunvC43pekHs3hVtnFPWzPdizdwSqKVLAbWP",
   "schema_dri": "gffA2i9tCexTwQ1S6JsXxJ8JEMHfTdaMtggBjX6jvF8N"
+}' | curl -H "Content-Type: application/json" -d @- \
+    -X POST http://localhost:4000/api/data
+
+
+echo '[{
+  "content": {
+    "first_name": "Christoph",
+    "last_name": "Fabianek",
+    "gender": "male"
+  },
+  "dri": "zQmbNDA8UVGsunvC43pekHs3hVtnFPWzPdizdwSqKVLAbWP",
+  "schema_dri": "gffA2i9tCexTwQ1S6JsXxJ8JEMHfTdaMtggBjX6jvF8N"
+},{
+  "content": {
+    "first_name": "Christoph1",
+    "last_name": "Fabianek1",
+    "gender": "male"
+  },
+  "dri": "zQmbNDA8UVGsunvC43pekHs3hVtnFPWzPdizdwSqKVLAbWQ",
+  "schema_dri": "gffA2i9tCexTwQ1S6JsXxJ8JEMHfTdaMtggBjX6jvF8N",
+  "table_name": "contacts"
 }]' | curl -H "Content-Type: application/json" -d @- \
     -X POST http://localhost:4000/api/data
 
@@ -37,6 +70,9 @@ curl -s "http://localhost:4000/api/data?schema_dri=gffA2i9tCexTwQ1S6JsXxJ8JEMHfT
 curl -s "http://localhost:4000/api/data?schema_dri=gffA2i9tCexTwQ1S6JsXxJ8JEMHfTdaMtggBjX6jvF8N&f=validation" | jq
 
 curl -s "http://localhost:4000/api/data?f=plain"
+
+curl -s "http://localhost:4000/api/data?table=contacts"
+
 
 
 # update
@@ -69,3 +105,7 @@ export TOKEN=`curl -s -d grant_type=client_credentials \
     -d client_id=$APP_KEY -d client_secret=$APP_SECRET \
     -X POST http://localhost:3000/oauth/token | \
     jq -r '.access_token'`
+
+
+
+curl -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '[{"content":{"first_name":"123","last_name":"123","gender":"1"},"dri":"shouldbesetbyclient","mime_type":"application/json","schema_dri":"gffA2i9tCexTwQ1S6JsXxJ8JEMHfTdaMtggBjX6jvF8N"}]' -X POST 'https://dip-clinician.data-container.net/api/data'

@@ -8,7 +8,7 @@ class ApiController < ApplicationController
 			if controller_name == "watermarks"
 				case action_name
 				when "account_fragment"
-					doorkeeper_authorize! :read, :write, :admin
+					doorkeeper_authorize! :read, :admin  # was:  :read, :write, :admin
 				else
 					doorkeeper_authorize! :admin
 				end
@@ -44,7 +44,7 @@ class ApiController < ApplicationController
 						if action_name == "write"
 							doorkeeper_authorize! :write, :admin
 						else
-							doorkeeper_authorize! :read, :write, :admin
+							doorkeeper_authorize! :read, :admin  # was:  :read, :write, :admin
 						end
 					end
 				end
@@ -53,7 +53,7 @@ class ApiController < ApplicationController
 					if action_name == "write"
 						doorkeeper_authorize! :write, :admin
 					else
-						doorkeeper_authorize! :read, :write, :admin
+						doorkeeper_authorize! :read, :admin  # was:  :read, :write, :admin
 					end
 				end
 			end

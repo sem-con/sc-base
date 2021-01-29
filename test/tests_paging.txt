@@ -1,0 +1,5 @@
+docker rm -f test_page
+docker run --name test_page -p 4000:3000 -d semcon/sc-base /bin/init.sh "$(< test/init.trig)"
+
+for i in {1..30}; do curl -H "Content-Type: application/json" -d "[{\"value\":$i}]" -X POST http://localhost:4000/api/data; done
+
