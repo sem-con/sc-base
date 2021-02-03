@@ -26,6 +26,9 @@ module Api
                 if ENV["IMAGE_NAME"].to_s != ""
                     retVal["image"] = ENV["IMAGE_NAME"].to_s
                 end
+                if ENV["IMAGE_SHA256"].to_s != ""
+                    retVal["image_hash"] = ENV["IMAGE_SHA256"].to_s
+                end
                 retVal["serviceEndPoint"] = ENV["SERVICE_ENDPOINT"].to_s
                 retVal["records"] = Store.count
                 render json: retVal.to_json, 

@@ -48,6 +48,7 @@ GEM
       activerecord (>= 3.2, < 7.0)
       rake (>= 10.4, < 14.0)
     arel (9.0.0)
+    base58 (0.2.3)
     bcp47 (0.3.3)
       i18n
     better_errors (2.9.1)
@@ -60,6 +61,7 @@ GEM
     concurrent-ruby (1.1.8)
     connection_pool (2.2.3)
     crass (1.0.6)
+    dag (0.0.9)
     delayed_job (4.1.9)
       activesupport (>= 3.0, < 6.2)
     delayed_job_active_record (4.1.5)
@@ -73,6 +75,7 @@ GEM
       rdf (~> 3.1)
       scanf (~> 1.0)
       sxp (~> 1.1)
+    ed25519 (1.2.4)
     equivalent-xml (0.6.0)
       nokogiri (>= 1.4.3)
     erubi (1.10.0)
@@ -373,10 +376,13 @@ PLATFORMS
 
 DEPENDENCIES
   annotate
+  base58
   better_errors
   byebug
+  dag
   delayed_job_active_record
   doorkeeper (~> 4.4.0)
+  ed25519
   hashlink
   httparty
   jbuilder

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_17_162712) do
+ActiveRecord::Schema.define(version: 2021_02_03_223329) do
 
   create_table "async_processes", force: :cascade do |t|
     t.string "rid"
@@ -66,6 +66,33 @@ ActiveRecord::Schema.define(version: 2020_12_17_162712) do
     t.index ["priority", "run_at"], name: "delayed_jobs_priority"
   end
 
+  create_table "did_logs", force: :cascade do |t|
+    t.text "item"
+    t.string "oyd_hash"
+    t.string "did"
+    t.integer "ts"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["did"], name: "index_did_logs_on_did"
+    t.index ["oyd_hash"], name: "index_did_logs_on_oyd_hash", unique: true
+  end
+
+  create_table "did_sessions", force: :cascade do |t|
+    t.string "session"
+    t.string "oauth_application_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "challenge"
+  end
+
+  create_table "dids", force: :cascade do |t|
+    t.string "did"
+    t.string "doc"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["did"], name: "index_dids_on_did", unique: true
+  end
+
   create_table "logs", force: :cascade do |t|
     t.text "item"
     t.datetime "created_at", null: false
@@ -111,7 +138,8 @@ ActiveRecord::Schema.define(version: 2020_12_17_162712) do
     t.string "scopes", default: "", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "confidential", default: true, null: false
+    t.boolean "confidential", default: false, null: false
+    t.string "sc_query"
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 

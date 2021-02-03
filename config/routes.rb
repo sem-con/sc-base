@@ -66,9 +66,25 @@ Rails.application.routes.draw do
 				to: 'watermarks#identify',                        via: 'post'
 			match 'watermark/account/:account_id/fragment/:fragment_id',
 				to: 'watermarks#compare',                         via: 'post'
+
+			# OYDID handling
+			match 'oydid/init',        to: 'oydids#init',         via: 'post'
+			match 'oydid/token',       to: 'oydids#token',        via: 'post'
 		end
 	end
+
+	# OAuth application handling
 	match '/oauth/applications'     => 'application#create_application',  via: 'post'
 	match '/oauth/applications/:id' => 'application#destroy_application', via: 'delete'
+
+	# OYDID handling
+    match 'doc/:did', to: 'dids#show',   via: 'get', constraints: {did: /.*/}
+    match 'did/:did', to: 'dids#show',   via: 'get', constraints: {did: /.*/}
+    match 'did',      to: 'dids#create', via: 'post'
+    match 'doc',      to: 'dids#create', via: 'post'
+    match 'log/:id',  to: 'logs#show',   via: 'get', constraints: {id: /.*/}
+    match 'log/:did', to: 'logs#create', via: 'post', constraints: {did: /.*/}
+    match 'doc/:did', to: 'dids#delete', via: 'delete', constraints: {did: /.*/}
+
 	match ':not_found' => 'application#missing', :constraints => { :not_found => /.*/ }, via: [:get, :post]
 end

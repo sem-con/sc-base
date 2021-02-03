@@ -51,7 +51,8 @@ class ApplicationController < ActionController::API
         new_app = Doorkeeper::Application.new(
             name: params[:name].to_s,
             redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
-            scopes: params[:scopes].to_s)
+            scopes: params[:scopes].to_s,
+            sc_query: params[:query])
         if new_app.save
             createLog({"type": "new app","scope": "id: " + new_app.id.to_s + ", name: '" + params[:name].to_s + "', scopes: '" + params[:scopes].to_s + "'" })
             render json: { id: new_app.id,

@@ -22,6 +22,11 @@ gem 'delayed_job_active_record'
 gem 'paypal-sdk-rest'
 gem 'pagy', '~> 3.5'
 gem 'hashlink'
+gem 'ed25519'
+gem 'base58'
+gem 'dag'
+
+
 
 # update for security fixes
 gem 'loofah', '~> 2.3', '>= 2.3.1'
