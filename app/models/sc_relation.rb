@@ -1,0 +1,2 @@
+class ScRelation < ApplicationRecord
+end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_02_03_223329) do
+ActiveRecord::Schema.define(version: 2021_04_24_231107) do
 
   create_table "async_processes", force: :cascade do |t|
     t.string "rid"
@@ -153,6 +153,15 @@ ActiveRecord::Schema.define(version: 2021_02_03_223329) do
     t.string "receipt_hash"
     t.text "scope"
     t.string "revocation_key"
+  end
+
+  create_table "sc_relations", force: :cascade do |t|
+    t.integer "source_id"
+    t.integer "target_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["source_id"], name: "index_sc_relations_on_source_id"
+    t.index ["target_id"], name: "index_sc_relations_on_target_id"
   end
 
   create_table "semantics", force: :cascade do |t|

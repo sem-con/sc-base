@@ -1,4 +1,5 @@
 #!/bin/bash
+# docker build -f ./docker/Dockerfile_graphDB -t semcon/sc-base:graphdb .
 
 CONTAINER="sc-base"
 REPOSITORY="semcon"

@@ -5,3 +5,12 @@ cat data_seismic.ttl | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g; s/\"/\\"/g' 
 docker run -p 4000:3000 -it --rm --name semcon semcon/sc-base /bin/init.sh "$(< spec/fixtures/files/init_seismic.trig)"
 curl -H "Content-Type: application/json" -d "$(< spec/fixtures/files/data_seismic.ttl.json)" -X POST http://localhost:4000/api/data
 
+
+
+# validating semantics
+docker rm -f ttl
+docker run -d -p 3200:3000 --name ttl semcon/sc-base /bin/init.sh "$(< spec/fixtures/files/init_ttl.trig)"
+
+cat test/ttl/person.ttl | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g; s/\"/\\"/g' | echo "{\"content\":\"$(cat - )\"}" | jq | curl -H "Content-Type: application/json" -d @- -X POST http://localhost:3200/api/data
+
+curl -s "http://localhost:3200/api/data/1?p=id&f=plain" | ruby -e "puts $(</dev/stdin)"

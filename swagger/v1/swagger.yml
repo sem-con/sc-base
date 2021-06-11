@@ -551,6 +551,68 @@ paths:
         '404':
           description: not found
           content: {}
+  /api/relation:
+    get:
+      summary: read related records
+      tags:
+        - Relations
+      parameters:
+        - name: id
+          description: Item ID of the record for which the relations are to be queried
+          in: query
+          schema:
+            type: integer
+        - name: ttl
+          description: number of iteration levels for relations (default 0 - only directly related records are returned)
+          in: query
+          schema:
+            type: integer
+        - name: mode
+          description: only show 'upstream', 'downstream', or 'undirected' (= upstream & downstream) relations
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelationResponse"
+        "400":
+          description: invalid request
+        "403":
+          description: permission violation
+        "404":
+          description: id not found
+    post:
+      summary: create a new relation between records
+      tags:
+        - Relations
+      parameters:
+        - in: query
+          name: p
+          description: parameter type (id is default)
+          required: false
+          schema:
+            type: string
+            enum:
+              - id
+              - dri
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RelationBody"
+      responses:
+        "200":
+          description: success
+        "400":
+          description: invalid request
+        "403":
+          description: permission violation
+        "404":
+          description: id not found
   /api/buy:
     post:
       tags:
@@ -944,6 +1006,33 @@ components:
         table_name:
           type: string
           description: tag to group records (mimics repo functionality of Data Vault)
+    RelationBody:
+      properties:
+        source:
+          description: Item ID or DRI of the source record
+          type: integer
+        targets:
+          description: Array of item IDs or DROs for target records
+          type: array
+          items:
+            type: integer
+    RelationResponse:
+      type: array
+      items:
+        properties:
+          id:
+            description: Item ID of the respective record
+            type: integer
+          downstream:
+            description: Array of item IDs related downstream
+            type: array
+            items:
+              type: integer
+          upstram:
+            description: Array of item IDs related upstream
+            type: array
+            items:
+              type: integer
   requestBodies:
     Input:
       content:

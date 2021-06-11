@@ -1,7 +1,7 @@
 module ProvenanceHelper
     include ProvenanceActivityHelper
 
-    def getProvenance(data_hash, param_str, timeStart, timeEnd)
+    def getProvenance(data_hash, param_str, timeStart, timeEnd, ids)
 
     	if Semantic.count == 0
     		return ""
@@ -104,7 +104,7 @@ module ProvenanceHelper
         end
 
         # Activity
-        prov += getProvenanceActivity(data_hash, container_uid, param_str, timeStart, timeEnd)
+        prov += getProvenanceActivity(data_hash, container_uid, param_str, timeStart, timeEnd, ids)
 
         prov
     end

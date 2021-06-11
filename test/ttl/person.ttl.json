@@ -1,0 +1,3 @@
+{
+  "content": "@prefix owl: <http://www.w3.org/2002/07/owl#> .\n@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n@prefix dc: <http://purl.org/dc/terms/> .\n@prefix xsd: <http://www.w3.org/2001/XMLSchema> .\n@prefix p: <http://example.org/Person#> .\n\np:base a owl:Class ;\n  rdfs:label \"Person\" ;\n  dc:identifier \"123abc_DRI\" .\n\np:givenName a owl:DatatypeProperty ;\n  rdfs:domain p:base ;\n  rdfs:range xsd:string .\n\np:familyName a owl:DatatypeProperty ;\n  rdfs:domain p:base ;\n  rdfs:range xsd:string .\n\np:birthDate a owl:DatatypeProperty ;\n  rdfs:domain p:base ;\n  rdfs:range xsd:date ."
+}

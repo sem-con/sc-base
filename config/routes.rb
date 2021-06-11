@@ -7,10 +7,6 @@ Rails.application.routes.draw do
 	end
 	namespace :api, defaults: { format: :json } do
 		scope module: :v1, constraints: ApiConstraints.new(version: 1, default: true) do
-#			match 'desc', to: 'semantics#create',         via: 'post'
-#			match 'desc', to: 'semantics#show',           via: 'get'
-#			match 'desc/info', to: 'semantics#show_info', via: 'get'
-#			match 'desc/example', to: 'semantics#show_example', via: 'get'
 			match 'active',             to: 'processes#active',       via: 'get'
 			match 'init',               to: 'processes#init',         via: 'post'
 			match 'meta',               to: 'semantics#create',       via: 'post'
@@ -22,9 +18,6 @@ Rails.application.routes.draw do
 			match 'meta/tables',        to: 'semantics#table',        via: 'get'
 			match 'data',               to: 'stores#index',           via: 'get'
 			match 'data',               to: 'stores#delete',          via: 'delete'
-			# match 'data/plain',         to: 'stores#plain',           via: 'get'
-			# match 'data/full',          to: 'stores#full',            via: 'get'
-			# match 'data/provision',     to: 'stores#provision',       via: 'get'
 			match 'data/:id',           to: 'stores#index',           via: 'get'
 			match 'data',               to: 'stores#write',           via: 'post'
 			match 'data/:id',           to: 'stores#write',           via: 'put'
@@ -66,6 +59,10 @@ Rails.application.routes.draw do
 				to: 'watermarks#identify',                        via: 'post'
 			match 'watermark/account/:account_id/fragment/:fragment_id',
 				to: 'watermarks#compare',                         via: 'post'
+
+			# Relations
+			match 'relation', to: 'relations#index', via: 'get'
+			match 'relation', to: 'relations#create', via: 'post'
 
 			# OYDID handling
 			match 'oydid/init',        to: 'oydids#init',         via: 'post'

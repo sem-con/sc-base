@@ -3,22 +3,28 @@ module DataAccessHelper
 
     def getRecords(params)
         page = params[:page] || 1
+        if page == "all"
+            page = 1
+            items = Store.count
+        else
+            items = 20
+        end
 
         # filter methods
         if params[:id].to_s != "" && params[:p].to_s == "id"
-            @pagy, @records = pagy(Store.where(id: params[:id]).select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page)
+            @pagy, @records = pagy(Store.where(id: params[:id]).select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page, items: items)
         elsif params[:id].to_s != "" && params[:p].to_s == "dri"
-            @pagy, @records = pagy(Store.where(dri: params[:id]).select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page)
+            @pagy, @records = pagy(Store.where(dri: params[:id]).select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page, items: items)
         elsif params[:table].to_s != ""
             if params[:table].to_s == "default"
-                @pagy, @records = pagy(Store.where(table_name: [nil, "", "default"]).select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page)
+                @pagy, @records = pagy(Store.where(table_name: [nil, "", "default"]).select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page, items: items)
             else
-                @pagy, @records = pagy(Store.where(table_name: params[:table]).select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page)
+                @pagy, @records = pagy(Store.where(table_name: params[:table]).select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page, items: items)
             end
         elsif params[:schema_dri].to_s != ""
-            @pagy, @records = pagy(Store.where(schema_dri: params[:schema_dri]).select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page)
+            @pagy, @records = pagy(Store.where(schema_dri: params[:schema_dri]).select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page, items: items)
         else
-            @pagy, @records = pagy(Store.select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page)
+            @pagy, @records = pagy(Store.select(:id, :item, :dri, :schema_dri, :table_name, :created_at, :updated_at, :mime_type), page: page, items: items)
         end
         retVal = @records.map(&:serializable_hash) rescue []
 
@@ -33,6 +39,7 @@ module DataAccessHelper
             @records = []
         end
         content = []
+        ids = []
         case retVal_type.to_s
         when "JSON"
             if @records.count > 0
@@ -58,15 +65,22 @@ module DataAccessHelper
                     val["created_at"] = el["created_at"].iso8601 rescue ""
                     val["updated_at"] = el["updated_at"].iso8601 rescue ""
                     content << val.stringify_keys
+                    ids << el["id"]
                 end
             end
             content_hash = Digest::SHA256.hexdigest(content.to_json)
         when "RDF"
-            @records.each { |el| content << el["item"].to_s }
+            @records.each do |el| 
+                content << el["item"].to_s
+                ids << el["id"]
+            end
             content_hash = Digest::SHA256.hexdigest(content.to_s)
         else
             content = ""
-            @records.each { |el| content += el["item"].to_s + "\n" }
+            @records.each do |el| 
+                content += el["item"].to_s + "\n"
+                ids << el["id"]
+            end
             content_hash = Digest::SHA256.hexdigest(content.to_s)
         end
         timeEnd = Time.now.utc
@@ -76,7 +90,7 @@ module DataAccessHelper
         if params[:p].to_s == ""
             retVal = {
                 "data": content,
-                "provenance": getProvenance(content_hash, param_str, timeStart, timeEnd)
+                "provenance": getProvenance(content_hash, param_str, timeStart, timeEnd, ids)
             }.stringify_keys
             if cup.to_s != ""
                 retVal["usage-policy"] = cup
@@ -85,11 +99,11 @@ module DataAccessHelper
             if content == [] || content == ""
                 retVal = content
             else
-                retVal = content.first
+                retVal = JSON.parse(content.first.gsub("=>",":")) rescue content.first
                 if cup.to_s != ""
                     retVal["usage-policy"] = cup
                 end
-                retVal["provenance"] = getProvenance(content_hash, param_str, timeStart, timeEnd)
+                retVal["provenance"] = getProvenance(content_hash, param_str, timeStart, timeEnd, ids)
             end
         end
 

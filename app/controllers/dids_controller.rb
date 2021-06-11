@@ -84,7 +84,7 @@ class DidsController < ApplicationController
                    status: 412
             return
         end
-        if didHash != oyd_hash(didDocument.to_json)
+        if didHash.to_s != oyd_hash(didDocument.to_json)
             render json: {"error": "DID does not match did-document"},
                    status: 400
             return

@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-ruby '2.5.7'
+ruby '2.5.9'
 
 gem 'rails', '~> 5.2.3'
 gem 'sqlite3', '~> 1.3.6'
@@ -25,7 +25,8 @@ gem 'hashlink'
 gem 'ed25519'
 gem 'base58'
 gem 'dag'
-
+gem 'json-canonicalization'
+gem 'mimemagic', github: 'mimemagicrb/mimemagic', ref: '01f92d86d15d85cfd0f20dabd025dcbd36a8a60f'
 
 
 # update for security fixes

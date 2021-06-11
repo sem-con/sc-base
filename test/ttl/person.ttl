@@ -1,0 +1,21 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema> .
+@prefix p: <http://example.org/Person#> .
+
+p:base a owl:Class ;
+  rdfs:label "Person" ;
+  dc:identifier "123abc_DRI" .
+
+p:givenName a owl:DatatypeProperty ;
+  rdfs:domain p:base ;
+  rdfs:range xsd:string .
+
+p:familyName a owl:DatatypeProperty ;
+  rdfs:domain p:base ;
+  rdfs:range xsd:string .
+
+p:birthDate a owl:DatatypeProperty ;
+  rdfs:domain p:base ;
+  rdfs:range xsd:date .

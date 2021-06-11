@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# handle ENVIRONMENT variables
 rm -f /usr/src/app/tmp/pids/server.pid /usr/src/app/log/*.log
 if [[ ${WATERMARK} ]]; then
     if [[ -z "${AUTH}" ]]; then
@@ -19,7 +20,7 @@ fi
 bundle exec rake db:create
 bundle exec rake db:migrate
 
-rails server -b 0.0.0.0 &
+/usr/src/app/bin/rails server -b 0.0.0.0 &
 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:3000/api/active)" != "200" ]]; do sleep 5; done'
 /usr/src/app/script/init.rb
 sleep infinity

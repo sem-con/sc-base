@@ -147,7 +147,9 @@ module DataWriteHelper
             render json: {"receipt": receipt_hash.to_s,
                           "serviceEndpoint": ENV["SERVICE_ENDPOINT"].to_s,
                           "read_hash": read_hash,
-                          "revocationKey": revocation_key},
+                          "revocationKey": revocation_key,
+                          "processed": new_items.count,
+                          "responses": new_items},
                    status: 200
 
         # rescue => ex
