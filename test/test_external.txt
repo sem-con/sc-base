@@ -1,0 +1,16 @@
+docker-compose.yml
+=============================================
+sc:
+  image: semcon/sc-base
+  environment:
+    SEMCON_DB: "external"
+  links:
+    - db
+  ports:
+    - "3000:3000"
+
+db:
+  image: postgres:12.1
+  volumes:
+    - sc-postgres:/var/lib/postgresql/data
+---------------------------------------------

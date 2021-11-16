@@ -149,7 +149,7 @@ module DataWriteHelper
                           "read_hash": read_hash,
                           "revocationKey": revocation_key,
                           "processed": new_items.count,
-                          "responses": new_items},
+                          "responses": new_items.map{|e| {"id": e, "status":200}}},
                    status: 200
 
         # rescue => ex

@@ -1,0 +1,92 @@
+http://localhost:3000/tableau
+
+echo '{"hello": "world"}' | curl -H "Content-Type: application/json" -d @- -X POST http://localhost:3000/api/data
+
+
+SCHEMA
+====================
+var cols = [{
+    id: "id",
+    dataType: tableau.dataTypeEnum.string
+}, {
+    id: "planedDep",
+    dataType: tableau.dataTypeEnum.datetime
+}, {
+    id: "flightNr",
+    dataType: tableau.dataTypeEnum.string
+}, {
+    id: "operator",
+    dataType: tableau.dataTypeEnum.string
+}, {
+    id: "depCode",
+    dataType: tableau.dataTypeEnum.string
+}, {
+    id: "destName",
+    dataType: tableau.dataTypeEnum.string
+}, {
+    id: "destCode",
+    dataType: tableau.dataTypeEnum.string
+}, {
+    id: "aircraftType",
+    dataType: tableau.dataTypeEnum.string
+}, {
+    id: "registration",
+    dataType: tableau.dataTypeEnum.string
+}, {
+    id: "statusTime",
+    dataType: tableau.dataTypeEnum.datetime
+}, {
+    id: "delay",
+    dataType: tableau.dataTypeEnum.float
+}];
+ 
+var tableSchema = {
+    id: "SemConFeed",
+    alias: "Data from SemCon",
+    columns: cols
+};                        
+
+
+
+TABLEDATA
+====================
+tableData.push({
+    "id": row[i].flightNr.concat("_").concat(row[i].planedDep.substring(0,10)),
+    "planedDep": row[i].planedDep,
+    "flightNr": row[i].flightNr,
+});
+
+
+if (row[i].flightNr){
+  tableData.push({
+      "id": row[i].flightNr.concat("_").concat(row[i].planedDep.substring(0,10)),
+      "planedDep": moment(row[i].planedDep).format("Y-MM-DD HH:mm:ss"),
+      "flightNr": row[i].flightNr,
+                  "operator": row[i].operator,
+                  "depCode": row[i].depCode,
+                  "destName": row[i].destName,
+                  "destCode": row[i].destCode,
+                  "aircraftType": row[i].aircraftType,
+                  "registration": row[i].registration,
+                  "statusTime": moment(row[i].statusTime).format("Y-MM-DD HH:mm:ss"),
+                  "delay": row[i].delay
+  });
+}
+
+
+
+for (var i = 0, len = row.length; i < len; i++) {
+  if (row[i].flightNr){
+    tableData.push({
+        "id": row[i].flightNr.concat("_").concat(row[i].planedDep.substring(0,10)),
+        "planedDep": moment(row[i].planedDep).format("Y-MM-DD HH:mm:ss"),
+        "flightNr": row[i].flightNr,
+    });
+  }
+}
+
+URL
+====================
+http://localhost:4004/api/data?f=plain
+
+

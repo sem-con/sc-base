@@ -19,7 +19,7 @@ include ApplicationHelper
         logs = add_next(logs)
 
         # add all log entries that came before (use previous)
-        logs = add_previous(logs)
+        logs = add_previous(logs, [didHash])
 
         render json: logs.sort_by { |el| el["ts"] }.to_json, 
                status: 200
@@ -41,9 +41,9 @@ include ApplicationHelper
         new_entries = []
         logs.each do |log|
             if log["op"] == 0 # TERMINATE
-                @log = DidLog.find_by_oyd_hash(remove_location(log["doc"]))
+                @log = Log.find_by_oyd_hash(remove_location(log["doc"]))
                 if !@log.nil?
-                    tmp = DidLog.where(did: @log.did).pluck(:item).map { |i| JSON.parse(i) } rescue []
+                    tmp = Log.where(did: @log.did).pluck(:item).map { |i| JSON.parse(i) } rescue []
                     tmp.delete(log)
                     new_entries << tmp
                     new_entries << add_next(tmp)
@@ -53,23 +53,25 @@ include ApplicationHelper
         [new_entries, logs].compact.flatten.uniq
     end
 
-    def add_previous(logs)
+    def add_previous(logs, done)
         new_dids = []
         new_entries = []
         logs.each do |log|
             if log["previous"] != []
                 log["previous"].each do |entry|
-                    @log = DidLog.find_by_oyd_hash(entry)
+                    @log = Log.find_by_oyd_hash(entry)
                     if !@log.nil?
-                        new_dids << @log.did
+                        if !done.include?(@log.did)
+                            new_dids << @log.did
+                        end
                     end
                 end
             end
         end
         if new_dids.count > 0
             new_dids = new_dids.uniq
-            new_entries = DidLog.where(did: new_dids).pluck(:item).map { |i| JSON.parse(i) } rescue []
-            more_entries = add_previous(new_entries)
+            new_entries = Log.where(did: new_dids).pluck(:item).map { |i| JSON.parse(i) } rescue []
+            more_entries = add_previous(new_entries, [new_dids, done].flatten.uniq)
         end
         [new_entries, more_entries, logs].compact.flatten.uniq
     end

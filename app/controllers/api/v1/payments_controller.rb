@@ -271,7 +271,6 @@ module Api
                             buyer_signature: params["buyer-signature"].to_s,
                             buyer_pubkey_id: nil,
                             buyer_address: address_info,
-                            offer_info: nil,
                             offer_price: params["cost"].to_f,
                             offer_timestamp: transaction_timestamp,
                             offer_info: params["records"].to_s +  " records",

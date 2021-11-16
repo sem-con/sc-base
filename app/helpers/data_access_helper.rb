@@ -7,7 +7,7 @@ module DataAccessHelper
             page = 1
             items = Store.count
         else
-            items = 20
+            items = params[:page_size] || 20
         end
 
         # filter methods

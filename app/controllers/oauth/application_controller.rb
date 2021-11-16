@@ -1,3 +1,3 @@
 class Oauth::ApplicationController < Doorkeeper::ApplicationsController
-	before_filter :doorkeeper_authorize! :admin
+    before_action -> { doorkeeper_authorize! :admin }
 end

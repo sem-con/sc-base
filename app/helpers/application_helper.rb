@@ -1,4 +1,5 @@
 module ApplicationHelper
+
     def createLog(value, read_hash="")
         app_id = doorkeeper_token.application_id rescue nil;
         if !app_id.nil?
