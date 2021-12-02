@@ -10,13 +10,27 @@ module Api
             respond_to :xml, only: []
 
             def active
-                render json: { "active": true,
-                               "auth": ENV["AUTH"].to_s != "",
-                               "repos": false,
-                               "watermark":  ENV["WATERMARK"].to_s != "",
-                               "billing": ENV["AUTH"].to_s == "billing",
-                               "scopes": ["admin", "write", "read"]
-                             }.to_json,
+                retVal = { "active": true,
+                           "auth": ENV["AUTH"].to_s != "",
+                           "repos": false,
+                           "watermark":  ENV["WATERMARK"].to_s != "",
+                           "billing": ENV["AUTH"].to_s == "billing",
+                           "scopes": ["admin", "write", "read"]
+                         }
+                @store = Store.where(schema_dri: "4ktjMzvwbhAeGM8Dwu67VcCnuJc52K3fVdq7V1qCPWLw")
+                @store.each do |i|
+                    begin
+                        if JSON.parse(i.item)["key"] == "oauth"
+                            if retVal["oauth"].nil?
+                                retVal["oauth"] = [JSON.parse(JSON.parse(i.item)["value"])]
+                            else
+                                retVal["oauth"] << JSON.parse(JSON.parse(i.item)["value"])
+                            end
+                        end
+                    rescue
+                    end
+                end unless @store.nil?
+                render json: retVal,
                        status: 200
             end
 

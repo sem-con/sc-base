@@ -73,6 +73,7 @@ Rails.application.routes.draw do
 	# OAuth application handling
 	match '/oauth/applications'     => 'application#create_application',  via: 'post'
 	match '/oauth/applications/:id' => 'application#destroy_application', via: 'delete'
+	match 'signin-oidc', to: 'application#oidc', via: 'get'
 
 	# OYDID handling
     match 'doc/:did', to: 'dids#show',   via: 'get', constraints: {did: /.*/}

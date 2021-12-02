@@ -80,6 +80,13 @@ class ApplicationController < ActionController::API
         end
     end
 
+    def oidc
+        puts "Code: " + params[:code].to_s
+        puts "State: " + params[:state].to_s
+        render plain: "", 
+               status: 200
+    end
+
     def missing
         render json: {"error": "invalid path"},
                status: 404
