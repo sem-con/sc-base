@@ -12,11 +12,13 @@ RUN mkdir -p $RAILS_ROOT/tmp/pids && \
 
 COPY Gemfile $WORKDIR
 
-RUN bundle install
-
+RUN git config --global url."https://".insteadOf git:// && \
+	bundle install && \
+	bundle update
 COPY . .
 
 RUN bundle update && \
+	rake app:update:bin && \
 	ln -s $PWD/script/init.sh /bin/init.sh
 
 CMD ["./script/run.sh"]

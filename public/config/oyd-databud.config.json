@@ -8,6 +8,35 @@
     }
   },
   "settings": {
-    "actions": {}
+    "actions": {
+      "qrConnectIssuer": {
+        "title": "QR Connect",
+        "url": "https://idunion-verifier.data-container.net/qr",
+        "method": "OPEN"
+      },
+      "schedulerIssuer": {
+        "title": "Trigger Scheduler",
+        "url": "{{base_url}}/api/scheduler/zQmUXLZUuWYCaNnxw4si2Sf3orzhpdgZGTKHPYoRPiQuoM5",
+        "usesAuth": true,
+        "method": "GET"
+      }
+    },
+    "additionalListActions": {
+      "vaccination": {
+        "method": "POST",
+        "usesAuth": true,
+        "title": "New Vaccination",
+        "url": "{{base_url}}/api/new_vaccination"
+      }
+    },
+    "additionalFormActions": {
+      "vaccination": {
+        "method": "PUT",
+        "usesAuth": true,
+        "title": "Vaccinate",
+        "schemaDri": "zQmdNpyqL6eoSKUZzzq6M67imS5pgLw6iEWvFH55PUNDNVk",
+        "url": "{{base_url}}/api/update_vaccination/{{item_id}}"
+      }
+    }
   }
 }

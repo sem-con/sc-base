@@ -88,9 +88,13 @@ module DataAccessHelper
         param_str = request.query_string.to_s
         cup = container_usage_policy.to_s
         if params[:p].to_s == ""
+            prov = nil
+            if params[:f].to_s != "plain" && params[:f].to_s != "full"
+                prov = getProvenance(content_hash, param_str, timeStart, timeEnd, ids)
+            end
             retVal = {
                 "data": content,
-                "provenance": getProvenance(content_hash, param_str, timeStart, timeEnd, ids)
+                "provenance": prov
             }.stringify_keys
             if cup.to_s != ""
                 retVal["usage-policy"] = cup
@@ -103,7 +107,11 @@ module DataAccessHelper
                 if cup.to_s != ""
                     retVal["usage-policy"] = cup
                 end
-                retVal["provenance"] = getProvenance(content_hash, param_str, timeStart, timeEnd, ids)
+                prov = nil
+                if params[:f].to_s != "plain" && params[:f].to_s != "full"
+                    prov = getProvenance(content_hash, param_str, timeStart, timeEnd, ids)
+                end
+                retVal["provenance"] = prov
             end
         end
 

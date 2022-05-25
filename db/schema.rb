@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_24_231107) do
+ActiveRecord::Schema.define(version: 2021_12_10_204217) do
 
   create_table "async_processes", force: :cascade do |t|
     t.string "rid"
@@ -140,6 +140,9 @@ ActiveRecord::Schema.define(version: 2021_04_24_231107) do
     t.datetime "updated_at", null: false
     t.boolean "confidential", default: false, null: false
     t.string "sc_query"
+    t.string "oidc_identifier"
+    t.string "oidc_secret"
+    t.string "oidc_token_endpoint"
     t.index ["uid"], name: "index_oauth_applications_on_uid", unique: true
   end
 

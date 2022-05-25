@@ -7,6 +7,7 @@ module Api
             include PolicyMatchHelper
             include ProvenanceHelper
             include PaymentHelper
+            include PlantumlHelper
             include Pagy::Backend
 
             # respond only to JSON requests
@@ -115,6 +116,9 @@ module Api
                             }
                         }.stringify_keys
 
+                    elsif params[:f].to_s == "provis"
+                        retVal = [plantuml(provision)]
+                        # retVal = ["@startuml\nallowmixing\nskinparam shadowing false\nactor :Person dri-p1s...: as p1\nstate \"Activity: **create cattle**\" as a1 #palegreen\na1 : ts: 2021-01-01T01:00:00Z ref: dri-a10s...\nmap \" Entity: ** Cattle ** \" as e1 {\n  id => 10\n  dri => dri-e10s...\n}\nnode s1 #aliceblue [\nAgent: **SemCon** (Farmer)\nsemcon/sc-base:latest\nguid: id-sc1s...\n]\na1 <-up- e1 : wasGeneratedBy\na1 -> s1 : wasAssociatedWith\ns1 <-left- e1 : attributedTo\ns1 --> p1 : actedOnBehalfOf\n@enduml"]
                     else # format=full
                         if provision == [] || provision == ""
                             if params[:p].to_s == ""

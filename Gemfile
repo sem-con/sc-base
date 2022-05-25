@@ -28,6 +28,8 @@ gem 'dag'
 gem 'json-canonicalization'
 gem 'mimemagic', github: 'mimemagicrb/mimemagic', ref: '01f92d86d15d85cfd0f20dabd025dcbd36a8a60f'
 gem 'jwt'
+gem "rqrcode", "~> 2.0"
+gem "oydid"
 
 
 # update for security fixes
@@ -40,7 +42,7 @@ group :development, :test do
 end
 
 group :development do
-  gem 'listen', '>= 3.0.5', '< 3.2'
+  # gem 'listen', '>= 3.0.5', '< 3.2'
   gem 'better_errors'
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'

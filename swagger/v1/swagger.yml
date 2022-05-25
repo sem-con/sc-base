@@ -83,6 +83,9 @@ paths:
               required:
                 - name
                 - scopes
+                - oidc_identifier
+                - oidc_secret
+                - oidc_token_endpoint
               type: object
               properties:
                 name:

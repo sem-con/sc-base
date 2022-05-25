@@ -1,0 +1,12 @@
+docker rm -f oidc
+docker run -d --name oidc -p 4000:3000 -e AUTH=true semcon/sc-base:latest
+
+# write data with admin scope
+export APP_KEY=`docker logs oidc | grep APP_KEY | awk -F " " '{print $NF}'`; export APP_SECRET=`docker logs oidc | grep APP_SECRET | awk -F " " '{print $NF}'`; export TOKEN=`curl -s -d grant_type=client_credentials -d client_id=$APP_KEY -d client_secret=$APP_SECRET -d scope=admin -X POST http://localhost:4000/oauth/token | jq -r '.access_token'`
+
+curl -H "Authorization: Bearer $TOKEN" -d name=oidc_app -d scopes=admin -d oidc_identifier=23183 -d oidc_secret=lzdysrq2sOZgVpJuSWDaVZXRGXf6prVDjxcdqxsVT6U -d oidc_token_endpoint=https://auth-ssi-demo.esatus.com/services/idp/oidc/token -X POST http://localhost:4000/oauth/applications
+
+
+export APP_KEY=XY; export APP_SECRET=YZ; export TOKEN=`curl -s -d grant_type=client_credentials -d client_id=$APP_KEY -d client_secret=$APP_SECRET -d scope=admin -X POST https://oidc.data-container.net/oauth/token | jq -r '.access_token'`
+
+curl -H "Authorization: Bearer $TOKEN" -d name=oidc_app -d scopes=admin -d oidc_identifier=23183 -d oidc_secret=lzdysrq2sOZgVpJuSWDaVZXRGXf6prVDjxcdqxsVT6U -d oidc_token_endpoint=https://auth-ssi-demo.esatus.com/services/idp/oidc/token -X POST https://oidc.data-container.net/oauth/applications

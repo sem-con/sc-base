@@ -3,6 +3,7 @@ module Api
         class ProcessesController < ApiController
             require 'securerandom'
             include ApplicationHelper
+            include Pagy::Backend
 
             # respond only to JSON requests
             respond_to :json
@@ -11,7 +12,7 @@ module Api
 
             def active
                 retVal = { "active": true,
-                           "auth": ENV["AUTH"].to_s != "",
+                           "auth": !(ENV["AUTH"].to_s == "" || ENV["AUTH"].to_s.downcase == "false") ,
                            "repos": false,
                            "watermark":  ENV["WATERMARK"].to_s != "",
                            "billing": ENV["AUTH"].to_s == "billing",
@@ -46,7 +47,7 @@ module Api
                     request_sh = "init.sh"
                 end
 
-                if ENV["AUTH"].to_s != ""
+                if !(ENV["AUTH"].to_s == "" || ENV["AUTH"].to_s.downcase == "false")
                     if Doorkeeper::Application.count == 0
                         Doorkeeper::Application.create!({ 
                             name: 'master', 
