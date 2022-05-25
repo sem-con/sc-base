@@ -37,4 +37,4 @@ If you want to contribute, please follow these steps:
 
 ## Lizenz
 
-[MIT License 2018 - OwnYourData.eu](https://raw.githubusercontent.com/sem-con/sc-base/master/LICENSE)
+[MIT License 2022 - OwnYourData.eu](https://raw.githubusercontent.com/sem-con/sc-base/master/LICENSE)
